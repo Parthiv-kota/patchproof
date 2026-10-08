@@ -1,0 +1,207 @@
+"""Run an explicitly selected check and track whether its watched files change."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import html
+import json
+import os
+from pathlib import Path, PurePosixPath
+import signal
+import subprocess
+import sys
+import time
+
+MAX_FILES = 2000
+MAX_BYTES = 64 * 1024 * 1024
+
+
+class ReceiptError(Exception):
+    pass
+
+
+def fingerprint(root, names, allow_missing=False):
+    root = Path(root).resolve(strict=True)
+    if not root.is_dir() or not 1 <= len(names) <= MAX_FILES:
+        raise ReceiptError("Select between 1 and 2000 files in a project directory.")
+    result, total = {}, 0
+    for name in sorted(set(names)):
+        if not isinstance(name, str) or not name or "\\" in name or ":" in name:
+            raise ReceiptError("Use project-relative file paths with forward slashes.")
+        rel = PurePosixPath(name)
+        if rel.is_absolute() or ".." in rel.parts or rel.as_posix() != name:
+            raise ReceiptError("Watched paths must stay inside the project.")
+        path = root.joinpath(*rel.parts)
+        if any(p.is_symlink() for p in [path, *path.parents] if p != root and p.is_relative_to(root)):
+            raise ReceiptError("Symbolic links cannot be watched in this version.")
+        if not path.resolve().is_relative_to(root):
+            raise ReceiptError("Watched paths must stay inside the project.")
+        if not path.exists() and allow_missing:
+            result[name] = None
+            continue
+        if not path.is_file():
+            raise ReceiptError("Every watched path must be an existing regular file.")
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            while block := stream.read(1024 * 1024):
+                total += len(block)
+                if total > MAX_BYTES:
+                    raise ReceiptError("Watched files exceed the 64 MiB total limit.")
+                digest.update(block)
+        result[name] = digest.hexdigest()
+    return result
+
+
+def run_check(root, names, command, timeout=120):
+    if not command or not all(isinstance(a, str) and a for a in command):
+        raise ReceiptError("Provide an explicit executable and its arguments.")
+    if Path(command[0]).suffix.lower() in {".bat", ".cmd", ".ps1"}:
+        raise ReceiptError("Use an executable directly, such as python.exe or node.exe.")
+    if not 1 <= timeout <= 3600:
+        raise ReceiptError("Timeout must be between 1 and 3600 seconds.")
+    before = fingerprint(root, names)
+    started = datetime.now(timezone.utc).isoformat()
+    tick = time.monotonic()
+    status, code = "error", None
+    options = {"start_new_session": True} if os.name != "nt" else {}
+    try:
+        # Output stays in the caller's terminal; it is never stored in a receipt.
+        process = subprocess.Popen(command, cwd=Path(root).resolve(), shell=False, **options)
+        try:
+            code = process.wait(timeout=timeout)
+            status = "passed" if code == 0 else "failed"
+        except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+                subprocess.run([str(system_root / "System32/taskkill.exe"), "/PID", str(process.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10, check=False)
+            else:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=10)
+            status = "timed_out"
+    except OSError:
+        status = "error"
+    try:
+        after = fingerprint(root, names, allow_missing=True)
+    except (ReceiptError, OSError):
+        after = None
+    return {"schema_version": 1, "started_at": started,
+            "duration_seconds": round(time.monotonic() - tick, 3),
+            "command": command, "exit_code": code, "check_status": status,
+            "before": before, "after": after,
+            "limits": "Only the listed files are watched. Exit zero does not prove correctness, security, or test coverage. Receipts are editable local records, not signed attestations."}
+
+
+def inspect_receipt(root, receipt):
+    try:
+        if receipt["schema_version"] != 1 or receipt["check_status"] not in {"passed", "failed", "error", "timed_out"}:
+            raise ValueError()
+        before, after = receipt["before"], receipt["after"]
+        if not isinstance(before, dict) or not before:
+            raise ValueError()
+        for value in before.values():
+            if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+                raise ValueError()
+        if after is not None and (not isinstance(after, dict) or set(before) != set(after)):
+            raise ValueError()
+        if receipt["check_status"] == "passed" and receipt["exit_code"] != 0:
+            raise ValueError()
+    except (KeyError, TypeError, ValueError):
+        raise ReceiptError("Invalid or inconsistent receipt.") from None
+    current = fingerprint(root, list(before), allow_missing=True)
+    changed = sorted(name for name in before if before[name] != current[name])
+    if after is None:
+        state = "snapshot_unavailable"
+    elif before != after:
+        state = "changed_during_check"
+    elif current != after:
+        state = "changed_since_check"
+    else:
+        state = "current_" + receipt["check_status"]
+    return {"state": state, "changed_files": changed, "watched_count": len(before),
+            "check_status": receipt["check_status"]}
+
+
+LABELS = {
+    "snapshot_unavailable": ("Files could not be rechecked", "The after-check snapshot was unavailable. Inspect the watched files and run again."),
+    "current_passed": ("Check passed", "The selected command exited successfully. The watched files still match."),
+    "current_failed": ("Check failed", "The selected command failed. The watched files still match that run."),
+    "changed_since_check": ("Check is out of date", "Watched files changed after this run. Run the check again."),
+    "changed_during_check": ("Files changed during the check", "The before and after snapshots differ. Review the changes and run again."),
+    "current_timed_out": ("Check timed out", "The command did not finish within its time limit."),
+    "current_error": ("Check could not start", "No successful check result was recorded."),
+}
+
+
+def report_html(receipt, result):
+    title, message = LABELS[result["state"]]
+    escape = lambda value: html.escape(str(value), quote=True)
+    rows = "".join("<li><code>" + escape(name) + "</code></li>" for name in receipt["before"])
+    color = "#0f766e" if result["state"] == "current_passed" else "#9a3412"
+    command = json.dumps(receipt.get("command", []), ensure_ascii=True)
+    return f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PatchProof — {escape(title)}</title><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f3f6f5;color:#172e32;font:17px/1.6 system-ui,sans-serif}}
+main{{max-width:880px;margin:48px auto;padding:28px}}header{{display:flex;align-items:center;gap:12px;font-weight:750}}
+.icon{{background:#153e43;color:#9af0d0;border-radius:12px;padding:8px 16px;font-size:28px}}
+.tag{{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#536a6e}}h1{{font-size:clamp(30px,6vw,46px);line-height:1.12;margin-bottom:16px}}
+.card{{background:white;border:1px solid #d9e4e1;border-radius:18px;padding:26px;margin:24px 0;box-shadow:0 7px 22px #183d3806}}
+.status{{color:{color};font-weight:700}}code{{font-size:14px;overflow-wrap:anywhere}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f5;padding:16px;border-radius:10px}}
+.muted{{color:#536a6e}}footer{{font-size:14px}}ul{{padding-left:24px}}a{{color:#0f766e}}</style>
+<main><header><span class="icon" aria-hidden="true">✓</span>PatchProof <span class="tag">Local check receipt</span></header>
+<section class="card"><span class="status">{escape(result['state'].replace('_', ' ').upper())}</span>
+<h1>{escape(title)}</h1><p>{escape(message)}</p><p class="muted">Evaluated when this report was generated. This HTML does not update itself.</p></section>
+<section class="card"><h2>What actually ran</h2><pre>{escape(command)}</pre>
+<p>Exit code: <strong>{escape(receipt.get('exit_code'))}</strong> · Duration: {escape(receipt.get('duration_seconds'))} seconds</p>
+<p class="muted">Started {escape(receipt.get('started_at'))}</p><h2>Files watched ({result['watched_count']})</h2><ul>{rows}</ul></section>
+<footer><strong>What this means:</strong> {escape(receipt.get('limits', 'Scope is limited to the listed files.'))}<p>No watched file contents or captured test output are included. Command arguments and filenames are included; review them before sharing.</p></footer></main></html>'''
+
+
+def write_new(path, text):
+    with Path(path).open("x", encoding="utf-8") as stream:
+        stream.write(text)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="action", required=True)
+    run = sub.add_parser("run")
+    run.add_argument("--repo", required=True, type=Path)
+    run.add_argument("--watch", required=True, action="append", help="Project-relative file; repeat for every input")
+    run.add_argument("--out", required=True, type=Path)
+    run.add_argument("--timeout", type=int, default=120)
+    run.add_argument("command", nargs=argparse.REMAINDER)
+    status = sub.add_parser("status")
+    status.add_argument("--repo", required=True, type=Path)
+    status.add_argument("--receipt", required=True, type=Path)
+    status.add_argument("--html", type=Path)
+    args = parser.parse_args(argv)
+    try:
+        if args.action == "run":
+            if args.out.exists():
+                raise ReceiptError("Choose a new receipt path; existing files are never replaced.")
+            if not args.out.parent.is_dir():
+                raise ReceiptError("The receipt output directory must already exist.")
+            command = args.command[1:] if args.command[:1] == ["--"] else args.command
+            receipt = run_check(args.repo, args.watch, command, args.timeout)
+            write_new(args.out, json.dumps(receipt, indent=2, ensure_ascii=True) + "\n")
+        else:
+            if args.receipt.stat().st_size > 2 * 1024 * 1024:
+                raise ReceiptError("Receipt is too large.")
+            receipt = json.loads(args.receipt.read_text(encoding="utf-8"))
+        result = inspect_receipt(args.repo, receipt)
+        if args.action == "status" and args.html:
+            write_new(args.html, report_html(receipt, result))
+        print(json.dumps(result, indent=2))
+        return 0 if result["state"] == "current_passed" else 1
+    except (ReceiptError, OSError, ValueError) as error:
+        print("PatchProof could not complete: " + str(error), file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,89 @@
+[
+  {
+    "receipt": {
+      "schema_version": 1,
+      "started_at": "2026-10-05T16:55:27.664133+00:00",
+      "duration_seconds": 0.431,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "-v"
+      ],
+      "exit_code": 1,
+      "check_status": "failed",
+      "before": {
+        "calculator.py": "917c8e8f06f0cb5bb1c320e7619a760fb4e210159afe07375ad6d57215cfc7f1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "after": {
+        "calculator.py": "917c8e8f06f0cb5bb1c320e7619a760fb4e210159afe07375ad6d57215cfc7f1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "limits": "Only the listed files are watched. Exit zero does not prove correctness, security, or test coverage. Receipts are editable local records, not signed attestations."
+    },
+    "current": {
+      "calculator.py": "917c8e8f06f0cb5bb1c320e7619a760fb4e210159afe07375ad6d57215cfc7f1",
+      "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+    }
+  },
+  {
+    "receipt": {
+      "schema_version": 1,
+      "started_at": "2026-10-05T16:55:45.124669+00:00",
+      "duration_seconds": 0.362,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "-v"
+      ],
+      "exit_code": 0,
+      "check_status": "passed",
+      "before": {
+        "calculator.py": "b9cce73f8a82488bb9acc63eb392f96c337e327b8471b91b3bf04fc3d826f8d1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "after": {
+        "calculator.py": "b9cce73f8a82488bb9acc63eb392f96c337e327b8471b91b3bf04fc3d826f8d1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "limits": "Only the listed files are watched. Exit zero does not prove correctness, security, or test coverage. Receipts are editable local records, not signed attestations."
+    },
+    "current": {
+      "calculator.py": "b9cce73f8a82488bb9acc63eb392f96c337e327b8471b91b3bf04fc3d826f8d1",
+      "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+    }
+  },
+  {
+    "receipt": {
+      "schema_version": 1,
+      "started_at": "2026-10-05T16:55:45.124669+00:00",
+      "duration_seconds": 0.362,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "-v"
+      ],
+      "exit_code": 0,
+      "check_status": "passed",
+      "before": {
+        "calculator.py": "b9cce73f8a82488bb9acc63eb392f96c337e327b8471b91b3bf04fc3d826f8d1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "after": {
+        "calculator.py": "b9cce73f8a82488bb9acc63eb392f96c337e327b8471b91b3bf04fc3d826f8d1",
+        "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+      },
+      "limits": "Only the listed files are watched. Exit zero does not prove correctness, security, or test coverage. Receipts are editable local records, not signed attestations."
+    },
+    "current": {
+      "calculator.py": "a8a9b594a8da55d3b7313d1a1d625262e5f180db1111c88556fd87013918f9a0",
+      "test_calculator.py": "7ad5f4a1fdc87abab870f5ec575022254e6fcc536c054fe221cd8476919788d9"
+    }
+  }
+]

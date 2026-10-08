@@ -1,0 +1,34 @@
+{
+  "name": "patchproof",
+  "version": "0.1.0",
+  "description": "Review, fix and explain code changes with concrete verification evidence and plain-language limits.",
+  "author": {
+    "name": "PatchProof contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "verification",
+    "maintainers",
+    "beginner-friendly"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "PatchProof",
+    "shortDescription": "Understand and check changes",
+    "longDescription": "Explain AI-generated changes, investigate concrete regressions, make focused fixes and prepare factual handoffs. Includes a read-only Git inventory helper. Reviews remain agent-assisted; the plugin does not certify correctness or security.",
+    "developerName": "PatchProof contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "logo": "./assets/icon.svg",
+    "composerIcon": "./assets/icon.svg",
+    "defaultPrompt": [
+      "Check my changes and explain them in plain English.",
+      "Fix this bug and show what proves the fix works.",
+      "Prepare a handoff with what was tested and what is still uncertain."
+    ]
+  }
+}

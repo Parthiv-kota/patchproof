@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.test-tmp/
+outputs/
+.build/
+.env*
+docs/GITHUB_PUBLISHING_KIT.md
+docs/OSS_READINESS.md
+docs/INSPIRATION.md

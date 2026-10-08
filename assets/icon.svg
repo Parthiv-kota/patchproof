@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <title>PatchProof change cards and verification mark</title>
+  <rect width="128" height="128" rx="30" fill="#152B35"/>
+  <rect x="24" y="23" width="57" height="72" rx="12" stroke="#819DA8" stroke-width="6"/>
+  <rect x="43" y="36" width="59" height="70" rx="12" fill="#203E48" stroke="#65E4C2" stroke-width="6"/>
+  <path d="m56 71 11 11 21-24" stroke="#F5FFFC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

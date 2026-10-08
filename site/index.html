@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>PatchProof — Know what was checked</title>
+  <meta name="description" content="Local check receipts for AI-assisted code. Compare watched files, spot stale results, and share clear evidence.">
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<aside>
+  <a class="brand" href="#overview"><img src="../assets/icon.svg" alt=""><span>PatchProof<small>Confidence needs evidence.</small></span></a>
+  <div class="nav-label">YOUR WORKSPACE</div>
+  <nav aria-label="Main navigation">
+    <a href="#overview" data-page="overview"><span aria-hidden="true">◫</span> Overview</a>
+    <a href="#compare" data-page="compare"><span aria-hidden="true">✓</span> Check a receipt</a>
+    <a href="#guide" data-page="guide"><span aria-hidden="true">↗</span> Get started</a>
+  </nav>
+  <div class="sidebar-note"><span class="dot"></span> Local workspace<p>No account or API key needed for receipts. Your selected files stay in this browser.</p><span class="version">v0.1.0 · early preview</span></div>
+</aside>
+<div class="shell">
+  <header><span id="page-name">Overview</span><div><span class="privacy-badge">● No file uploads</span><button id="theme" class="quiet" aria-label="Switch to dark theme">Dark theme</button></div></header>
+  <main id="main" tabindex="-1">
+    <section id="overview" class="page">
+      <div class="eyebrow">A LITTLE MORE CLARITY. A LOT LESS GUESSWORK.</div>
+      <div class="hero"><div><h1>The AI says it works.<br><em>See what was checked.</em></h1><p>Turn “tests passed” into a clear record. See what ran, what it covered, and whether the code has changed since.</p><div class="actions"><a class="button primary" href="#compare">Check a receipt <span aria-hidden="true">↗</span></a><a class="button secondary" href="#guide">How it works</a></div></div><div class="proof-card"><div class="proof-top"><span class="dot"></span> A CHECK, WITH CONTEXT <span class="pill">Local</span></div><div class="file-line"><span>Recorded command</span><strong>python -m unittest</strong></div><div class="file-line"><span>Watched inputs</span><strong>Source + tests</strong></div><div class="file-line"><span>After another edit</span><strong class="amber">Run again ↻</strong></div><p>Old green checks should not speak for new code.</p></div></div>
+      <div class="section-title"><div><h2>Try it. One step at a time.</h2><p>Three saved snapshots from a real calculator test.</p></div><span class="tag">NO SETUP NEEDED</span></div>
+      <div class="steps" role="group" aria-label="Demonstration steps"><button data-demo="0" class="selected" aria-pressed="true"><span>01</span><strong>Catch the bug</strong><small>A real test fails.</small></button><button data-demo="1" aria-pressed="false"><span>02</span><strong>Check the fix</strong><small>The corrected code passes.</small></button><button data-demo="2" aria-pressed="false"><span>03</span><strong>Spot an old result</strong><small>Another edit changes the inputs.</small></button></div>
+      <article class="demo-result" aria-live="polite"><div><span id="demo-label" class="status">Loading example…</span><h3 id="demo-title">The calculator example</h3><p id="demo-description">Loading a saved check receipt.</p></div><div class="demo-details"><div><span>Recorded exit code</span><strong id="demo-exit">—</strong></div><div><span>Files watched</span><strong id="demo-count">—</strong></div><button id="open-example" class="text-button" disabled>Explore this receipt →</button></div></article>
+      <div class="benefits"><div><h3>Clear evidence</h3><p>Keep the command, outcome, time, and file fingerprints together.</p></div><div><h3>Useful limits</h3><p>A pass covers the chosen check and watched files—not every possible bug.</p></div><div><h3>Your data stays local</h3><p>The viewer reads selected files in your browser. There is no upload endpoint.</p></div></div>
+    </section>
+    <section id="compare" class="page" hidden>
+      <div class="eyebrow">FROM A CLAIM TO A CHECKABLE RECORD</div><h1>Does the result<br><em>still match your files?</em></h1><p class="intro">Open a receipt, then select the project folder to compare its watched files. This page compares fingerprints; it does not run tests or fix code.</p>
+      <div class="import-grid"><div class="panel"><span class="step-number">01</span><h2>Open a receipt</h2><p>Choose the JSON file created by PatchProof.</p><label class="file-label">Choose receipt JSON<input id="receipt-input" type="file" accept=".json,application/json"></label><small>Up to 2 MiB. Read locally in your browser.</small></div><div class="panel"><span class="step-number">02</span><h2>Compare your project</h2><p>Select the project root folder used for the check.</p><label class="file-label disabled" id="folder-label">Choose project folder<input id="folder-input" type="file" webkitdirectory multiple disabled></label><small>Only watched files are hashed. Up to 64 MiB.</small></div></div>
+      <p id="notice" class="notice" role="status" aria-live="polite">Choose a receipt to start, or explore an example from Overview.</p>
+      <div id="receipt-view" hidden>
+        <div class="result-heading"><div><span id="receipt-status" class="status"></span><h2 id="receipt-title"></h2><p id="receipt-description"></p></div><button id="export" class="button secondary">Save summary</button></div>
+        <div class="facts"><div><span>Recorded outcome</span><strong id="recorded-outcome"></strong></div><div><span>Watched files</span><strong id="watched-count"></strong></div><div><span>Duration</span><strong id="duration"></strong></div></div>
+        <details class="panel"><summary>Command and check details</summary><pre id="command"></pre><p id="started"></p><p id="exit-code"></p></details>
+        <div class="panel"><div class="section-title"><h2>Watched files</h2><label class="search">Find a file<input id="file-search" type="search" placeholder="Search paths…"></label></div><div id="file-list" class="file-list"></div></div>
+        <p class="scope-note">Only explicitly watched files are compared. New or unwatched files, installed dependencies, and environment changes are outside this check. Receipts are editable, unsigned records. A matching pass is not a correctness or security guarantee.</p>
+        <details id="summary-preview" class="panel" hidden><summary>Summary preview — copy this if your browser blocks downloads</summary><pre id="summary-text"></pre></details>
+      </div>
+    </section>
+    <section id="guide" class="page" hidden>
+      <div class="eyebrow">SMALL TOOL. CLEAR JOB.</div><h1>Use it with Codex.<br><em>Keep the evidence.</em></h1>
+      <div class="guide-grid"><article class="panel"><span class="step-number">01</span><h2>Ask for a focused review</h2><p>With the plugin installed in Codex, ask PatchProof to review a named project.</p><blockquote id="prompt">Use PatchProof to review my changes, explain any bugs in plain English, and record the checks you run. Ask before publishing anything.</blockquote><button class="button secondary" id="copy-prompt">Copy prompt</button><p id="copy-notice" role="status"></p></article><article class="panel"><span class="step-number">02</span><h2>Keep a check receipt</h2><p>Codex selects an appropriate check and runs it with the local helper. The receipt records the outcome and the files you chose to watch.</p><p>You can also run the helper directly with Python. No separate AI API key is required for it.</p></article><article class="panel"><span class="step-number">03</span><h2>Compare before handoff</h2><p>After later edits, open the receipt here and select the project folder. If files differ, rerun the check.</p><a class="button primary" href="#compare">Compare files →</a></article></div>
+      <h2>Good questions</h2><div class="faq"><details><summary>What actually fixes my code?</summary><p>Codex's AI follows the PatchProof skills and edits the project using Codex's tools and permissions. This uses your Codex access and its usage limits. The Python helper records checks; this website compares file fingerprints. Neither contains its own AI model.</p></details><details><summary>Are my files sent to a server?</summary><p>The website does not upload selected files. It hashes watched files in this browser and keeps the result in memory. Reloading clears them. Using the AI plugin is separate: relevant project data is processed according to your Codex account settings. Commands you choose to run may themselves access the network.</p></details><details><summary>Does a green result mean my project is safe?</summary><p>No. It means the recorded command exited zero and the watched bytes match. The check might miss a bug, and its scope may be incomplete. Receipts can also be edited and are not signed attestations.</p></details><details><summary>Does it add a watermark?</summary><p>PatchProof does not add watermarks or attribution comments to your project files. The dashboard and check reports carry PatchProof branding. The source package includes its MIT license.</p></details><details><summary>Can I use it without Codex?</summary><p>The Python helpers and this viewer work without an AI account. The bundled agent workflows have been developed for Codex; compatibility with other AI hosts must be tested separately.</p></details></div>
+    </section>
+    <footer>PatchProof · Know what was checked.<span>Open-source preview · No telemetry</span></footer>
+  </main>
+</div>
+</body></html>

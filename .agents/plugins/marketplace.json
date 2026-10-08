@@ -1,0 +1,12 @@
+{
+  "name": "patchproof-local",
+  "interface": {"displayName": "PatchProof local testing"},
+  "plugins": [
+    {
+      "name": "patchproof",
+      "source": {"source": "local", "path": "./"},
+      "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+      "category": "Productivity"
+    }
+  ]
+}
