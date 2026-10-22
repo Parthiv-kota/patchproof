@@ -1,0 +1,75 @@
+name: PatchProof check
+description: Record a check, keep a receipt, and fail when the code has moved since.
+
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  command:
+    description: Command to run, e.g. "pytest -q" or "npm test".
+    required: true
+  watch-dir:
+    description: Folder to watch. Repeat as a comma-separated list. Defaults to source and test trees.
+    required: false
+    default: ""
+  receipt:
+    description: Path for the receipt file.
+    required: false
+    default: patchproof-receipt.json
+  python:
+    description: Python executable to use.
+    required: false
+    default: python
+
+outputs:
+  state:
+    description: current_passed, changed_since_check, current_failed, or another documented state.
+    value: ${{ steps.pp.outputs.state }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install PatchProof
+      shell: bash
+      env:
+        PP_SOURCE: ${{ github.action_repository || 'Parthiv-kota/patchproof' }}
+        PP_REF: ${{ github.action_ref || 'main' }}
+      run: ${{ inputs.python }} -m pip install --quiet --disable-pip-version-check "patchproof @ git+https://github.com/${PP_SOURCE}@${PP_REF}"
+
+    - name: Verify
+      id: pp
+      shell: bash
+      env:
+        PP_COMMAND: ${{ inputs.command }}
+        PP_WATCH: ${{ inputs.watch-dir }}
+        PP_RECEIPT: ${{ inputs.receipt }}
+      run: |
+        set +e
+        dir_args=""
+        if [ -n "$PP_WATCH" ]; then
+          IFS=',' read -r w1 w2 w3 w4 w5 <<< "$PP_WATCH"
+          for dir in $w1 $w2 $w3 $w4 $w5; do dir_args="$dir_args --watch-dir $dir"; done
+        fi
+        ${{ inputs.python }} -m patchproof.cli verify --out "$PP_RECEIPT" $dir_args -- $PP_COMMAND
+        code=$?
+        case "$code" in
+          0) state=current_passed ;;
+          2) state=error ;;
+          *) state=changed_since_check ;;
+        esac
+        echo "state=$state" >> "$GITHUB_OUTPUT"
+        echo "### PatchProof: $state" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo '```' >> "$GITHUB_STEP_SUMMARY"
+        cat "$PP_RECEIPT" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+        echo '```' >> "$GITHUB_STEP_SUMMARY"
+        exit $code
+
+    - name: Keep the receipt
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: patchproof-receipt
+        path: ${{ inputs.receipt }}
+        if-no-files-found: warn

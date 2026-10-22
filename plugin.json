@@ -1,11 +1,18 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "patchproof",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Review, fix and explain code changes with concrete verification evidence and plain-language limits.",
-  "author": {"name": "PatchProof contributors"},
+  "author": {
+    "name": "PatchProof contributors"
+  },
   "license": "MIT",
-  "keywords": ["code-review", "verification", "maintainers", "beginner-friendly"],
+  "keywords": [
+    "code-review",
+    "verification",
+    "maintainers",
+    "beginner-friendly"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
@@ -14,7 +21,10 @@
         "longDescription": "Explain AI-generated changes, investigate concrete regressions, make focused fixes and prepare factual handoffs. Includes a read-only Git inventory helper. Reviews remain agent-assisted; the plugin does not certify correctness or security.",
         "developerName": "PatchProof contributors",
         "category": "Productivity",
-        "capabilities": ["Read", "Write"],
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
         "logo": "./assets/icon.svg",
         "composerIcon": "./assets/icon.svg",
         "defaultPrompt": [

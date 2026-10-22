@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patchproof"
+version = "0.2.0"
+description = "Local check receipts for AI-assisted development: record what ran, which files were watched, and when a result went stale."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "PatchProof contributors" }]
+keywords = ["code-review", "verification", "test-receipts", "ai-assisted-development", "maintainers"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = []
+
+[project.urls]
+Homepage = "https://github.com/Parthiv-kota/patchproof"
+Documentation = "https://github.com/Parthiv-kota/patchproof/blob/main/docs/README.md"
+Issues = "https://github.com/Parthiv-kota/patchproof/issues"
+Changelog = "https://github.com/Parthiv-kota/patchproof/blob/main/CHANGELOG.md"
+
+[project.scripts]
+pp = "patchproof.cli:main"
+patchproof = "patchproof.cli:main"
+patchproof-snapshot = "patchproof.snapshot_cli:main"
+
+[tool.setuptools]
+packages = ["patchproof"]

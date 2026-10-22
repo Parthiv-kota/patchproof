@@ -1,15 +1,18 @@
 <p align="center"><img src="assets/icon.svg" width="88" alt="PatchProof logo"></p>
 
-<h1 align="center">PatchProof</h1>
-<p align="center"><strong>Tests passed. Do they still match your code?</strong></p>
-<p align="center">Local check receipts for AI-assisted development.<br>A Codex plugin, a Python recorder, and a browser viewer.</p>
-<p align="center"><a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<h1 align="center">patchproof</h1>
+<p align="center"><strong>Your test passed. Prove it still does.</strong></p>
+<p align="center">Agents edit code after the tests pass. patchproof keeps the evidence attached to the bytes it describes,<br>and tells you the moment that green check goes stale.</p>
+<p align="center"><a href="https://parthiv-kota.github.io/patchproof/">Website</a> · <a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<p align="center"><a href="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml"><img alt="Checks" src="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml/badge.svg"></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17634e"></a> <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-17634e"></p>
 
-PatchProof records the command you ran, its exit code, and fingerprints of the files you chose to watch. Before handing over a change, compare those files again. If they changed, the earlier pass no longer describes the current inputs.
+An agent runs your tests, they pass, and it says so honestly. Then the work continues — a follow-up edit, a second agent, a quick fix before the PR — and that sentence keeps its old meaning while the code underneath it changes.
+
+patchproof records the command, the exit code, and fingerprints of the files it watched. Run `pp audit` later and it tells you whether that result still describes your code.
 
 The Codex skills bring that habit into **review → fix → handoff**, with explanations a beginner can follow and evidence a maintainer can inspect.
 
-**v0.1.0 · early preview · MIT · Python standard library only**
+**v0.2.0 · early preview · MIT · Python standard library only**
 
 ## See the difference
 
@@ -21,9 +24,39 @@ The Codex skills bring that habit into **review → fix → handoff**, with expl
 
 A matching pass means the recorded command exited zero and the watched bytes match. It does **not** prove correctness, security, or complete test coverage. Receipts are editable local records, not signed attestations.
 
-## Try it in one minute
+## Three commands
 
-Download or clone this source, open a terminal in the `patchproof` folder, and run with Python 3.11 or newer:
+```sh
+pipx install .                   # Python 3.11+, standard library only
+pp verify -- pytest -q           # watch source, tests and manifests; record the result
+pp audit                         # nonzero exit if any receipt has gone stale
+```
+
+`pp` is the short name for `patchproof`. Nothing needs configuring: the default watch set is your source and test trees plus dependency manifests. Narrow it with `--watch-dir` or `--watch-glob` when you want to.
+
+A receipt reads `CHECK PASSED` only while the watched files still match. After an edit, `pp audit` says `changed_since_check` and names the files that moved.
+
+## Works with whatever agent you use
+
+`pp` is model-agnostic. It records commands, so any agent that can run a terminal benefits — and one command teaches it to:
+
+```sh
+pp agents install claude codex cursor windsurf aider copilot cline roo gemini
+```
+
+| Host | Rule file |
+|---|---|
+| Claude Code | `CLAUDE.md` |
+| Codex | `AGENTS.md` |
+| Cursor | `.cursor/rules/patchproof.mdc` |
+| Windsurf | `.windsurf/rules/patchproof.md` |
+| Aider | `CONVENTIONS.md` |
+| GitHub Copilot | `.github/instructions/patchproof.instructions.md` |
+| Cline · Roo · Gemini CLI | `.clinerules/` · `.roo/rules/` · `GEMINI.md` |
+
+Existing instruction files are appended to, never replaced, and re-running changes nothing. `pp agents detect` shows what a repository already uses.
+
+## The demo without installing anything
 
 ```sh
 python scripts/demo.py
@@ -64,13 +97,60 @@ Tested with **Codex CLI 0.160.0 on Windows**. Desktop picker activation and othe
 
 AI review and fixes use **your Codex model, tools, permissions, and usage allowance**. PatchProof does not bundle a model or free AI access. It has no automatic execution hooks or background model calls.
 
-## Record a check yourself
+## In CI
 
-From the PatchProof folder, replace the example project path and filenames with your own. Choose a new output filename each time:
+```yaml
+- uses: Parthiv-kota/patchproof@v0.2.0
+  with:
+    command: pytest -q
+```
+
+The step fails when the receipt no longer describes the code, and uploads the receipt as an artifact either way.
+
+### A badge that cannot lie
+
+```yaml
+- uses: Parthiv-kota/patchproof/badge@v0.2.0
+  with:
+    command: pytest -q
+```
+
+It runs the check, renders a badge from the receipt, and commits it to a `patchproof-badges` branch. Then in your README:
+
+```markdown
+![checks](https://raw.githubusercontent.com/OWNER/REPO/patchproof-badges/badge.svg)
+```
+
+The badge reads **up to date** only while the watched files still match the run. Edit the code without re-running and it flips to **out of date** on the next workflow run — or immediately, if you run `pp badge` locally. It is a picture of a receipt, not a decoration.
+
+Locally:
+
+```sh
+pp verify -- pytest -q
+pp badge --receipt patchproof-receipt.json --out pp.svg
+```
+
+## Record a check the long way
+
+Every flag is optional; this form is what the short commands wrap:
 
 ```sh
 python scripts/receipt.py run --repo /path/to/project --watch app.py --watch test_app.py --out receipt.json -- python -B -m unittest
 python scripts/receipt.py status --repo /path/to/project --receipt receipt.json --html report.html
+```
+
+Watching a whole folder or a pattern is usually easier than listing files:
+
+```sh
+python scripts/receipt.py run --repo /path/to/project --watch-dir tests --watch-glob 'src/**/*.py' --out receipt.json -- python -B -m pytest -q
+```
+
+Install it once and drop the `scripts/` prefix:
+
+```sh
+pipx install .        # or: pip install -e .
+patchproof run --repo /path/to/project --watch-dir tests --out receipt.json -- python -B -m pytest -q
+patchproof status --repo /path/to/project --receipt receipt.json
 ```
 
 On Windows, use a quoted path such as `--repo 'C:\Projects\my-app'`. Repeat `--watch` for relevant source, tests, configuration, and lock files. Output paths are relative to the terminal's current folder; the check runs inside the named project.
@@ -81,8 +161,8 @@ Commands run with your normal account permissions. The recorder is **not a sandb
 
 | Evidence | Scope |
 |---|---|
-| 24 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, and safe output handling. |
-| 12 JavaScript tests | Receipt parsing, comparison states, watched-file scope, and summary output. |
+| 40 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, verify/audit/badge, and safe output handling. |
+| 13 JavaScript tests | Receipt parsing, comparison states, watched-file scope, per-file labels, and summary output. |
 | Controlled Codex integration | Installed all three skills; reproduced two failing tests, fixed the calculator without weakening tests, and detected a later edit. |
 | Browser walkthrough | Saved examples, receipt import, actual file comparison, path search, export fallback, and theme switching. |
 
@@ -96,6 +176,7 @@ snapshot.py        → read-only inventory of local Git changes
 receipt.py run     → watched hashes + chosen command + outcome
 receipt.py status  → compare current files with the recorded inputs
 Browser viewer    → open, compare, and explain receipts locally
+web/              → the static project website
 ```
 
 No third-party Python packages, build framework, database, or MCP server are required. See the [architecture and data boundaries](docs/ARCHITECTURE.md).

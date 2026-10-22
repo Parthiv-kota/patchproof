@@ -17,7 +17,9 @@ node --test tests/test_viewer.mjs
 python scripts/build.py
 ```
 
-For UI changes, serve the project locally and verify receipt import, current/stale states, invalid input, search, export, keyboard access, and narrow layouts. Record what you actually tested. Test the Codex integration in a disposable repository if a skill or helper contract changes.
+For UI changes, serve the project locally and verify receipt import, current/stale states, invalid input, search, export, keyboard access, and narrow layouts. Record what you actually tested.
+
+The project website lives in [`web/`](web/README.md) and the receipt viewer in `site/`. Both are static and have no build step. Website pages must keep their strict content-security policy, must not load external scripts, fonts or images, and must stay accurate: if a behaviour changes, change the page in the same pull request. The `Checks` workflow verifies that every local link resolves, that page ids are unique, and that no page pulls in external or scripted content. The `Website` workflow repeats those checks against the assembled deploy bundle before publishing to GitHub Pages. Test the Codex integration in a disposable repository if a skill or helper contract changes.
 
 ## Pull requests
 

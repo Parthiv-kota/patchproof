@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python: ['3.11', '3.14']
+        python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v7
         with:
@@ -33,6 +33,45 @@ jobs:
       - name: Browser comparison logic
         run: node --test tests/test_viewer.mjs
       - name: Real calculator demo
-        run: python scripts/demo.py
+        shell: bash
+        run: |
+          python scripts/demo.py | tee demo.out
+          grep -Eq '^DEMO=.*index\.html$' demo.out
+          test -n "$(ls outputs/demo-*/1-failed.html outputs/demo-*/2-passed.html outputs/demo-*/3-outdated.html 2>/dev/null)"
+      - name: Website links and assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          root = Path('web')
+          pages = sorted(root.rglob('*.html'))
+          assert pages, 'no website pages found'
+          ids, problems = set(), []
+          for page in pages:
+              text = page.read_text(encoding='utf-8')
+              assert '<!doctype html>' in text.lower(), page
+              assert 'lang="en"' in text, page
+              for target in re.findall(r'(?:href|src)="([^"#][^"]*)"', text):
+                  if re.match(r'^(https?:|mailto:)', target):
+                      continue
+                  resolved = (page.parent / target.split('#')[0]).resolve()
+                  if not resolved.exists():
+                      problems.append(f'{page}: missing {target}')
+              ids = re.findall(r'\sid="([^"]+)"', text)
+              assert len(ids) == len(set(ids)), f'{page}: duplicate id'
+              assert "script-src 'none'" in text, f'{page}: unexpectedly allows scripts'
+              assert not re.search(r'<script|cdn\.|google-analytics|<img[^>]+https?://', text), f'{page}: external or scripted content'
+          assert not problems, problems
+          og = root / 'og.png'
+          assert og.is_file() and og.stat().st_size > 20000, 'social preview image missing'
+          demo = root / 'demo.gif'
+          assert demo.is_file() and demo.read_bytes()[:6] in (b'GIF87a', b'GIF89a'), 'demo.gif missing'
+          assert len(list((root / 'frames').glob('*.svg'))) >= 4, 'demo frames missing'
+          for page in pages:
+              assert 'og:image' in page.read_text(encoding='utf-8'), f'{page}: no og:image'
+          print(f'{len(pages)} website pages checked, social preview present')
+          PY
+
       - name: Validate source package
         run: python scripts/build.py

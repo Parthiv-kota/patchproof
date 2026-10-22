@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>patchproof — your test passed. prove it still does.</title>
+<meta name="description" content="Agents edit code after the tests pass. patchproof records the command, the exit code and fingerprints of the files it watched — then tells you the moment that green check stops describing your code. One command, no flags, no account.">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="patchproof — your test passed. prove it still does.">
+<meta property="og:description" content="Agents edit code after the tests pass. One command records the evidence and tells you when it goes stale.">
+<meta property="og:type" content="website">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="og.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="../assets/icon.svg" alt="">
+      <span>PatchProof<small>Confidence needs evidence</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </nav>
+    <a class="header-cta" href="install.html">Get started</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">v0.2.0 · MIT · python standard library only</div>
+        <h1>Your test passed.<br><em>Prove it still does.</em></h1>
+        <p class="lede">An agent edits your code, runs the tests, and says it worked. Two hours and three edits later, that green check is a claim about bytes that no longer exist. <strong>patchproof</strong> records the command, the exit code and the fingerprints of the files it watched — and tells you the moment the result stops describing your code.</p>
+        <pre style="margin-top:22px"><code><span class="c"># one command. no flags. no config.</span>
+$ pp verify -- pytest -q
+CHECK PASSED. 24 watched files unchanged.
+
+<span class="c"># three edits later, in CI or before a merge</span>
+$ pp audit
+   changed_since_check   patchproof-receipt.json
+   1 receipt, 1 out of date.</code></pre>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="install.html">Run it on your repo <span aria-hidden="true">→</span></a>
+          <a class="btn btn-secondary" href="how-it-works.html">How the evidence works</a>
+        </div>
+        <p class="hero-note">No account, no API key, no telemetry, nothing uploaded. Fails CI when the code moved.</p>
+      </div>
+
+      <div>
+        <figure class="mock" aria-label="Twelve second demo: an agent says the tests pass, a receipt is recorded, the file is edited, and the audit reports it out of date">
+          <img class="demo-gif demo-loop" src="demo.gif" width="1080" height="620" alt="Terminal recording: codex says done and tests pass, pp verify records CHECK PASSED, one file is edited, pp audit reports changed_since_check — 1 receipt, 1 out of date.">
+          <img class="demo-gif demo-zoom" src="frames/4-audit.svg" width="1080" height="620" alt="Close-up: pp audit prints changed_since_check for patchproof-receipt.json and 1 receipt, 1 out of date.">
+        </figure>
+        <p class="hero-note" style="margin-top:12px">Real output from <code>pp verify</code> and <code>pp audit</code> on a scratch project. <a href="how-it-works.html">Why a stale check is not a failed test →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROBLEM ================= -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">The lie nobody tells on purpose</div>
+        <h2>Nothing in that story was a lie. The green check was just old.</h2>
+        <p>An agent runs the tests, they pass, and it says so honestly. Then the work continues — a follow-up edit, a second agent, a quick fix before the PR — and the sentence keeps its old meaning while the code underneath it changes.</p>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>What everyone remembers</h3>
+          <ul class="ticks">
+            <li>“Tests pass.”</li>
+            <li>Something green in the PR.</li>
+            <li>The agent said it ran them.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What actually happened</h3>
+          <ul class="ticks cross">
+            <li>The pass was recorded before the last three edits.</li>
+            <li>The test file never changed — the source did.</li>
+            <li>Nobody can tell whether the check still applies.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:30px;margin-bottom:0">patchproof is one thing: it keeps the evidence attached to the exact bytes it describes, and tells you the moment those bytes move.</p>
+    </div>
+  </section>
+
+  <!-- ================= THREE PIECES ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Sixty seconds</div>
+        <h2>Three commands. That is the whole workflow.</h2>
+        <p>No config file, no watch list to maintain by hand, no service to sign up for. If you can run your tests, you can run this.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Install</h3>
+            <pre><code>pipx install patchproof</code></pre>
+            <p>Python 3.11+. Standard library only — no dependencies are pulled in.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Verify</h3>
+            <pre><code>pp verify -- pytest -q</code></pre>
+            <p>Watches your source and test trees plus dependency manifests by default, runs the command, prints one sentence, writes <code>patchproof-receipt.json</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Audit</h3>
+            <pre><code>pp audit</code></pre>
+            <p>Re-checks every receipt against the current files and exits nonzero if any of them went stale. This is the line that belongs in CI.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEMO ================= -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">One minute, no setup</div>
+        <h2>A real failure, a real pass, and an old result.</h2>
+        <p>The demo builds a tiny calculator, catches a genuine bug, fixes it, records a passing test, and then edits the code again so you can watch the pass go stale. It only touches its own fixture folder.</p>
+      </div>
+      <pre><code><span class="c"># from the PatchProof source folder, Python 3.11+</span>
+python scripts/demo.py
+<span class="c"># → DEMO=/…/outputs/demo-xxxx/index.html</span></code></pre>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="../examples/README.md">Read the walkthrough <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="../site/index.html">Open the receipt viewer</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOR CODEX ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Model-agnostic</div>
+        <h2>Whichever agent wrote the code, the evidence is the same.</h2>
+        <p><code>pp</code> records commands, not models. One command teaches your host to record its checks in the file it actually reads — your existing instructions are appended to, never replaced.</p>
+      </div>
+      <pre><code>pp agents install claude codex cursor windsurf aider copilot cline roo gemini</code></pre>
+      <div class="grid grid-3" style="margin-top:22px">
+        <article class="card"><h3>Claude Code · Codex</h3><p><code>CLAUDE.md</code> and <code>AGENTS.md</code>, the two files most hosts now share.</p></article>
+        <article class="card"><h3>Cursor · Windsurf · Cline · Roo</h3><p>Editor rule files, including Cursor's <code>.mdc</code> with <code>alwaysApply: true</code>.</p></article>
+        <article class="card"><h3>Aider · Copilot · Gemini CLI</h3><p><code>CONVENTIONS.md</code>, Copilot instruction files, and <code>GEMINI.md</code>.</p></article>
+      </div>
+      <div class="btn-row"><a class="btn btn-secondary" href="install.html">See every supported host →</a></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Put it where people look</div>
+        <h2>A badge that cannot lie about it.</h2>
+        <p>Most badges are decoration. This one is a picture of a receipt: it reads <strong>up to date</strong> only while the watched files still match the run, and flips to <strong>out of date</strong> when they move. A failing check publishes a failing badge rather than leaving the last green one in place.</p>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Two lines in CI</h3>
+          <pre><code>- uses: Parthiv-kota/patchproof/badge@v0.2.0
+  with:
+    command: pytest -q</code></pre>
+          <p>Runs the check, renders the badge, commits it to a <code>patchproof-badges</code> branch — and only when it changed.</p>
+        </div>
+        <div class="card">
+          <h3>One line in the README</h3>
+          <pre><code>![checks](https://raw.githubusercontent.com/
+  OWNER/REPO/patchproof-badges/badge.svg)</code></pre>
+          <p>The job also exposes <code>state</code> and <code>badge-url</code> outputs, so you never assemble a URL by hand.</p>
+        </div>
+      </div>
+      <div class="note-band">
+        <p><strong>It fails the build, too.</strong> The <code>verify</code> action is the gate; the <code>badge</code> action is the evidence. Use both, or use the badge one alone and let a red badge do the arguing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">With an agent</div>
+        <h2>Review → fix → handoff, with evidence attached.</h2>
+        <p>PatchProof ships three Codex skills. They guide the model; they do not grant permissions it would not otherwise have, and they never publish, message or deploy on their own.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card"><h3>Review</h3><p>Reads the change and the code it touches, then reports concrete regressions with a triggering input, not a list of worries.</p></article>
+        <article class="card"><h3>Fix</h3><p>Makes a focused correction and checks the relevant behaviour — without deleting the test that caught the bug.</p></article>
+        <article class="card"><h3>Handoff</h3><p>Summarises what changed, what actually ran, and what is still uncertain, in language a maintainer can act on.</p></article>
+      </div>
+      <div class="callout" style="margin-top:26px">
+        <p><strong>Bring your own model.</strong> AI review and fixes use your Codex account, tools and usage allowance. PatchProof does not bundle a model, a key, or free AI access — and its Python helpers work with no AI at all.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHAT IT DOES NOT PROVE ================= -->
+  <section class="band-deep">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" style="color:var(--mint)">Stated plainly</div>
+        <h2>A matching pass is not a proof.</h2>
+        <p>It means one recorded command exited zero and the watched bytes are unchanged. It does not mean the code is correct, secure, or well covered.</p>
+      </div>
+      <div class="grid grid-2">
+        <div>
+          <h3>What a receipt does show</h3>
+          <ul class="ticks">
+            <li>The executable and arguments that ran, and the exit code.</li>
+            <li>Which files you chose to watch, by SHA-256 fingerprint.</li>
+            <li>Whether those files changed during or after the run.</li>
+            <li>That the result is a local record you can re-check.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>What it cannot show</h3>
+          <ul class="ticks cross">
+            <li>Correctness, security, or complete test coverage.</li>
+            <li>Unwatched files, installed dependencies, environment variables.</li>
+            <li>Edits that were made and then undone between snapshots.</li>
+            <li>That a receipt was not edited — they are unsigned.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="btn-row"><a class="btn btn-secondary" href="limits.html">Read every limit →</a></div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section>
+    <div class="wrap-narrow">
+      <div class="section-head"><h2>Questions worth asking</h2></div>
+      <div class="faq">
+        <details>
+          <summary>Does PatchProof fix my code?</summary>
+          <p>No. An agent host such as Codex performs AI-assisted edits, following the bundled skills. The recorder runs the command you name, and the viewer only compares fingerprints. None of them edits your source on its own.</p>
+        </details>
+        <details>
+          <summary>Does anything leave my computer?</summary>
+          <p>The helpers contain no network client and the viewer has no upload endpoint — it hashes selected files in the browser and keeps the result in memory. Your chosen check command may use the network, and your AI host's data policy applies separately when it reads your project.</p>
+        </details>
+        <details>
+          <summary>Is this a sandbox?</summary>
+          <p>No. Commands run with your normal account permissions and can modify files or reach the network. Read the command before you record it, and keep secrets out of arguments — arguments are stored in the receipt.</p>
+        </details>
+        <details>
+          <summary>Why not just run the tests again?</summary>
+          <p>Sometimes you should. A receipt is for the case where you cannot — the machine is different, the dependency is gone, the reviewer is remote, or you simply need to know whether the result you were shown still describes the code you were given.</p>
+        </details>
+        <details>
+          <summary>Is this Ponytail?</summary>
+          <p>No. <a href="https://github.com/DietrichGebert/ponytail">Ponytail</a> inspired the focused-plugin format. PatchProof's code, skills and symbol were authored separately, and its purpose is keeping check evidence tied to watched files.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="band">
+    <div class="wrap-narrow" style="text-align:center">
+      <h2>Run it once on the repo you care about.</h2>
+      <p class="lede" style="margin-inline:auto">Then edit a file and run <code>pp audit</code>. If it says the check is out of date, you have just found the thing this tool exists for.</p>
+      <div class="btn-row" style="justify-content:center">
+        <a class="btn btn-primary" href="install.html">Install PatchProof <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="../docs/CLI.md">Command reference</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="index.html"><img src="../assets/icon.svg" alt=""><span>PatchProof<small>Confidence needs evidence</small></span></a>
+      <p>Local check receipts for AI-assisted development. Static site, no analytics, no cookies, no external requests.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <a href="../docs/README.md">Documentation index</a>
+      <a href="../docs/CLI.md">Command reference</a>
+      <a href="../examples/README.md">Example walkthrough</a>
+      <a href="../docs/ARCHITECTURE.md">Architecture</a>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <a href="../CONTRIBUTING.md">Contributing</a>
+      <a href="../SECURITY.md">Security</a>
+      <a href="../PRIVACY.md">Privacy</a>
+      <a href="../CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <span>MIT licensed · v0.2.0 early preview · Not a security audit, not a correctness guarantee.</span>
+    <span><a href="https://github.com/Parthiv-kota/patchproof">github.com/Parthiv-kota/patchproof</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

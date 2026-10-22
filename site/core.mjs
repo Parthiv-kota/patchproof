@@ -43,3 +43,10 @@ export function summaryMarkdown(receipt, result, example = false) {
   const safe = v => String(v).replace(/[\r\n]/g, ' ');
   return `# PatchProof check summary\n\n${example ? 'Saved demonstration snapshot; not a current project check.\n\n' : ''}Status: ${labels[result.state][0]}\n\nRecorded command arguments: ${JSON.stringify(receipt.command)}\n\nStarted: ${safe(receipt.started_at)}\nExit code: ${receipt.exit_code ?? 'none'}\nDuration: ${receipt.duration_seconds} seconds\n\nWatched files:\n${Object.keys(receipt.before).map(p => '- ' + safe(p)).join('\n')}\n\n${result.changes.length ? 'Changed or missing files:\n' + result.changes.map(p => '- ' + safe(p)).join('\n') + '\n\n' : ''}Only listed files were considered. Unwatched files, dependency installations, environment changes, and changes restored between snapshots are outside this check. Receipts are editable, unsigned records. A passing command does not prove correctness, coverage, or security. This exported report is a snapshot and does not update automatically.\n`;
 }
+
+// A saved example compares against its own snapshot, never against the user's files.
+export function fileLabel(path, result, example = false) {
+  if (result.state === 'not_compared') return 'Not compared';
+  if (example) return 'Matches saved snapshot';
+  return result.changes.includes(path) ? 'Changed / missing' : 'Matches before snapshot';
+}
