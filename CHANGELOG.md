@@ -4,6 +4,7 @@
 
 ### Added
 
+- `pp agents` — writes the verification instruction into the rule file each coding host reads: Claude Code (`CLAUDE.md`), Codex (`AGENTS.md`), Cursor (`.cursor/rules/*.mdc`), Windsurf, Cline, Roo Code, Aider (`CONVENTIONS.md`), Gemini CLI and GitHub Copilot. Existing files are appended to, never replaced; `pp agents detect` and `pp agents list` show what a repository already uses.
 - `pp verify` — one command, no flags: watches source and test trees plus dependency manifests, runs the command, prints one plain sentence, writes a receipt. Exit 1 the moment the result is stale.
 - `pp audit` — re-checks every receipt in a repository and exits nonzero if any is out of date. The line that belongs in CI.
 - `pp badge` — a self-contained SVG that can never claim a pass for a stale receipt.

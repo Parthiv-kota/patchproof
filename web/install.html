@@ -119,35 +119,56 @@ python scripts/receipt.py status --repo /path/to/project --receipt receipt.json 
   <section class="band">
     <div class="wrap">
       <div class="section-head">
-        <div class="eyebrow">Optional</div>
-        <h2>Install the commands globally</h2>
-        <p>An editable install gives you <code>patchproof</code> and <code>patchproof-snapshot</code>, so nothing depends on where the source folder sits.</p>
+        <div class="eyebrow">Naming</div>
+        <h2>One command, three spellings.</h2>
+        <p>The installer provides <code>pp</code>, <code>patchproof</code> and <code>patchproof-snapshot</code>. They are the same program under different names, so use whichever your fingers remember.</p>
       </div>
-      <pre><code>pipx install .        <span class="c"># isolated, recommended</span>
-<span class="c"># or: python -m pip install -e .</span>
-
-patchproof run --repo . --watch-dir tests --out receipt.json -- python -B -m pytest -q
-patchproof status --repo . --receipt receipt.json
-patchproof-snapshot --repo . --scope working</code></pre>
+      <pre><code>pp verify -- pytest -q          <span class="c"># short form, used everywhere on this site</span>
+patchproof verify -- pytest -q  <span class="c"># same command, long form</span>
+patchproof-snapshot --repo .    <span class="c"># read-only Git change inventory</span></code></pre>
     </div>
   </section>
 
   <section>
     <div class="wrap">
       <div class="section-head">
+        <div class="eyebrow">Works with your agent</div>
+        <h2>Teach any agent to record its checks.</h2>
+        <p><code>pp</code> records commands, so it does not care which model wrote the code. One command writes the same short instruction into whichever rule file your host reads.</p>
+      </div>
+      <pre><code>pp agents list       <span class="c"># every supported host, and what is set up here</span>
+pp agents detect     <span class="c"># what this repository already uses</span>
+pp agents install claude codex cursor windsurf aider copilot cline roo gemini</code></pre>
+      <table class="states" style="margin-top:22px">
+        <thead><tr><th scope="col">Host</th><th scope="col">Rule file written</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Code</td><td><code>CLAUDE.md</code></td></tr>
+          <tr><td>Codex</td><td><code>AGENTS.md</code></td></tr>
+          <tr><td>Cursor</td><td><code>.cursor/rules/patchproof.mdc</code> with <code>alwaysApply: true</code></td></tr>
+          <tr><td>Windsurf</td><td><code>.windsurf/rules/patchproof.md</code></td></tr>
+          <tr><td>Aider</td><td><code>CONVENTIONS.md</code></td></tr>
+          <tr><td>GitHub Copilot</td><td><code>.github/instructions/patchproof.instructions.md</code></td></tr>
+          <tr><td>Cline · Roo · Gemini CLI</td><td><code>.clinerules/</code> · <code>.roo/rules/</code> · <code>GEMINI.md</code></td></tr>
+          <tr><td>Anything else</td><td><code>.patchproof/AGENTS.md</code> to point it at</td></tr>
+        </tbody>
+      </table>
+      <div class="note-band">
+        <p><strong>Your existing instructions stay yours.</strong> The block is appended between <code>&lt;!-- patchproof:start --&gt;</code> and <code>&lt;!-- patchproof:end --&gt;</code>, never overwriting a file, and re-running changes nothing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
         <div class="eyebrow">Optional</div>
-        <h2>Add the Codex plugin</h2>
-        <p>Tested with Codex CLI 0.160.0 on Windows. Sign in to Codex normally first; your account's usage limits apply.</p>
+        <h2>The PatchProof Codex plugin</h2>
+        <p>If you use Codex, there is also a bundled plugin with three review skills — review, fix, handoff — that use the same receipts.</p>
       </div>
       <pre><code><span class="c"># from the PatchProof folder</span>
 codex plugin marketplace add .
-codex plugin add patchproof@patchproof-local
-codex plugin list --marketplace patchproof-local --json</code></pre>
-      <p>Start a fresh Codex session inside the project you want to review, then ask:</p>
-      <div class="callout">
-        <p>Use PatchProof to review my changes, explain any bugs in plain English, and record the checks you run. Ask before publishing anything.</p>
-      </div>
-      <p class="muted" style="font-size:14px">Desktop picker activation and other AI hosts are unverified. If installing from a synced OneDrive folder fails to copy plugin files, extract the archive to a regular local folder and register that one.</p>
+codex plugin add patchproof@patchproof-local</code></pre>
+      <p class="muted" style="font-size:14px">Tested with Codex CLI 0.160.0 on Windows. Desktop picker activation and other AI hosts are unverified. The <code>pp</code> commands themselves work with no AI host at all.</p>
     </div>
   </section>
 

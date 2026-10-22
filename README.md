@@ -36,6 +36,26 @@ pp audit                         # nonzero exit if any receipt has gone stale
 
 A receipt reads `CHECK PASSED` only while the watched files still match. After an edit, `pp audit` says `changed_since_check` and names the files that moved.
 
+## Works with whatever agent you use
+
+`pp` is model-agnostic. It records commands, so any agent that can run a terminal benefits — and one command teaches it to:
+
+```sh
+pp agents install claude codex cursor windsurf aider copilot cline roo gemini
+```
+
+| Host | Rule file |
+|---|---|
+| Claude Code | `CLAUDE.md` |
+| Codex | `AGENTS.md` |
+| Cursor | `.cursor/rules/patchproof.mdc` |
+| Windsurf | `.windsurf/rules/patchproof.md` |
+| Aider | `CONVENTIONS.md` |
+| GitHub Copilot | `.github/instructions/patchproof.instructions.md` |
+| Cline · Roo · Gemini CLI | `.clinerules/` · `.roo/rules/` · `GEMINI.md` |
+
+Existing instruction files are appended to, never replaced, and re-running changes nothing. `pp agents detect` shows what a repository already uses.
+
 ## The demo without installing anything
 
 ```sh
@@ -122,7 +142,7 @@ Commands run with your normal account permissions. The recorder is **not a sandb
 
 | Evidence | Scope |
 |---|---|
-| 32 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, verify/audit/badge, and safe output handling. |
+| 40 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, verify/audit/badge, and safe output handling. |
 | 13 JavaScript tests | Receipt parsing, comparison states, watched-file scope, per-file labels, and summary output. |
 | Controlled Codex integration | Installed all three skills; reproduced two failing tests, fixed the calculator without weakening tests, and detected a later edit. |
 | Browser walkthrough | Saved examples, receipt import, actual file comparison, path search, export fallback, and theme switching. |

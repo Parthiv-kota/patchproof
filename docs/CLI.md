@@ -2,6 +2,32 @@
 
 Requires Python 3.11+. Only the inventory command needs Git. Helpers use the Python standard library and do not require an API key. Run these commands from the PatchProof source folder.
 
+## Teach any coding agent to record its checks
+
+```sh
+pp agents list                     # every supported host, and whether it is set up here
+pp agents detect                   # which hosts this repository already uses
+pp agents install claude codex cursor windsurf aider copilot cline roo gemini
+pp agents install claude --dry-run
+```
+
+Writes the same short instruction into whichever rule file each host reads. Existing files are never replaced — the block is appended between `<!-- patchproof:start -->` and `<!-- patchproof:end -->`, and re-running is a no-op.
+
+| Agent | File written |
+|---|---|
+| Claude Code | `CLAUDE.md` |
+| Codex | `AGENTS.md` |
+| Cursor | `.cursor/rules/patchproof.mdc` (with `alwaysApply: true`) |
+| Windsurf | `.windsurf/rules/patchproof.md` |
+| Cline | `.clinerules/patchproof.md` |
+| Roo Code | `.roo/rules/patchproof.md` |
+| Aider | `CONVENTIONS.md` |
+| Gemini CLI | `GEMINI.md` |
+| GitHub Copilot | `.github/instructions/patchproof.instructions.md` (with `applyTo: "**"`) |
+| Anything else | `.patchproof/AGENTS.md` to point the host at |
+
+The instruction is deliberately four lines: record checks with `pp verify`, re-check with `pp audit`, treat `changed_since_check` as "not passing", and never claim a check that was not run.
+
 ## Verify a command (the short way)
 
 ```sh
