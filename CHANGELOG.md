@@ -2,6 +2,16 @@
 
 ## 0.2.0 — unreleased
 
+### Added
+
+- `pp verify` — one command, no flags: watches source and test trees plus dependency manifests, runs the command, prints one plain sentence, writes a receipt. Exit 1 the moment the result is stale.
+- `pp audit` — re-checks every receipt in a repository and exits nonzero if any is out of date. The line that belongs in CI.
+- `pp badge` — a self-contained SVG that can never claim a pass for a stale receipt.
+- `pp` as a short alias for `patchproof`, plus a composite GitHub Action (`action.yml`) so adoption is one workflow step.
+- `scripts/render_demo.py` — renders the site's demo from a real verify/audit run instead of hand-written terminal text.
+- Homepage rebuilt around the stale-check provocation, with the 12-second demo embedded.
+
+
 - Added `--watch-dir` and `--watch-glob` so a check can watch a folder or a pattern instead of every file by hand. Expansion skips VCS metadata, virtual environments, caches and dependency folders, keeps the existing containment checks, and fails loudly on an empty or oversized selection.
 - Added an installable `pyproject.toml` with `patchproof` and `patchproof-snapshot` console commands, so the recorder no longer has to be run from the source folder.
 - Fixed the viewer labelling a saved demonstration's files as a live comparison; per-file states now come from `fileLabel()` in `site/core.mjs`.

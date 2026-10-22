@@ -65,6 +65,9 @@ jobs:
           assert not problems, problems
           og = root / 'og.png'
           assert og.is_file() and og.stat().st_size > 20000, 'social preview image missing'
+          demo = root / 'demo.gif'
+          assert demo.is_file() and demo.read_bytes()[:6] in (b'GIF87a', b'GIF89a'), 'demo.gif missing'
+          assert len(list((root / 'frames').glob('*.svg'))) >= 4, 'demo frames missing'
           for page in pages:
               assert 'og:image' in page.read_text(encoding='utf-8'), f'{page}: no og:image'
           print(f'{len(pages)} website pages checked, social preview present')

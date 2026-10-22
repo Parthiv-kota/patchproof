@@ -2,6 +2,42 @@
 
 Requires Python 3.11+. Only the inventory command needs Git. Helpers use the Python standard library and do not require an API key. Run these commands from the PatchProof source folder.
 
+## Verify a command (the short way)
+
+```sh
+patchproof verify -- pytest -q
+```
+
+Watch sensible defaults, run the command, print one plain sentence, write a receipt. Watches `src/ lib/ app/ pkg/ tests/ test/ spec/`, any dependency manifest, and top-level source files. No flags required.
+
+| Option | Meaning |
+|---|---|
+| `--repo` | Project root; defaults to the current folder. |
+| `--watch` / `--watch-dir` / `--watch-glob` | Narrow the watch set; the defaults are used only when none are given. |
+| `--out` | New receipt path; default `patchproof-receipt.json`. Never overwritten. |
+| `--badge` | Also write a badge SVG for this result. |
+| `--timeout` | Whole seconds, 1–3600; default 600. |
+| `--quiet` | Print nothing on success. |
+
+Exit code **0** when the check passed and the files still match, **1** for any other state, **2** for an input error.
+
+## Audit a repository
+
+```sh
+patchproof audit
+patchproof audit --glob '**/receipts/*.json' --json
+```
+
+Finds receipts (default `**/*receipt*.json`), re-checks each against the current files, prints one line per receipt, and exits **1** if any are out of date. This is the command to run in CI, or before trusting a green check you did not see run.
+
+## Badge
+
+```sh
+patchproof badge --receipt patchproof-receipt.json --out pp.svg
+```
+
+Writes a self-contained SVG reading `up to date`, `out of date`, `failing` or `unknown`. A stale receipt can never produce a passing badge. The exit code follows the receipt's state.
+
 ## Record a command
 
 ```sh

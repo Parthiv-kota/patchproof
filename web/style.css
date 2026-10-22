@@ -297,3 +297,25 @@ ul.ticks.cross li::before { content: "×"; color: var(--amber); }
   body { background: #fff; }
   a { color: var(--ink); }
 }
+
+/* ---------- demo recording ---------- */
+.demo-gif {
+  display: block; width: 100%; height: auto;
+  background: #0d1b21;
+}
+.mock { border-radius: 14px; }
+.mock .demo-gif:first-child { border-radius: 14px 14px 0 0; }
+/* The looping GIF is all but invisible on machines that reduce motion, so the
+   static close-up below it carries the point on its own. */
+@media (prefers-reduced-motion: reduce) {
+  .demo-loop { display: none; }
+}
+.demo-zoom { border-top: 1px solid #1d333a; border-radius: 0 0 14px 14px; }
+figure.mock { margin: 0; }
+figure.mock figcaption {
+  padding: 12px 16px; font-size: 13px; color: var(--muted);
+  border-top: 1px solid var(--line); background: #fbfdfc;
+}
+
+  .note-band { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--green); border-radius: 0 12px 12px 0; padding: 18px 22px; margin-top: 30px; }
+  .note-band p:last-child { margin-bottom: 0; }

@@ -62,8 +62,10 @@
           <div class="step-n" aria-hidden="true"></div>
           <div>
             <h3>Get the source</h3>
-            <pre><code>git clone https://github.com/Parthiv-kota/patchproof.git
-cd patchproof</code></pre>
+            <pre><code>pipx install patchproof
+<span class="c"># or from source:</span>
+git clone https://github.com/Parthiv-kota/patchproof.git
+cd patchproof &amp;&amp; pipx install .</code></pre>
             <p class="muted" style="font-size:14px">Or use <strong>Code → Download ZIP</strong> and extract it. Keep the hidden <code>.agents</code> and <code>.codex-plugin</code> folders; on Windows, a normal local folder beats a synced OneDrive one.</p>
           </div>
         </div>
@@ -94,7 +96,13 @@ cd patchproof</code></pre>
         <h2>Record your first check</h2>
         <p>Choose a command you already trust — the test command you would run by hand — and name the files it depends on.</p>
       </div>
-      <pre><code><span class="c"># watch a folder and a pattern instead of listing every file</span>
+      <pre><code><span class="c"># no flags: watch source, tests and manifests by default</span>
+pp verify -- pytest -q
+
+<span class="c"># narrow it when you want to</span>
+pp verify --watch-dir tests --watch-glob 'src/**/*.py' -- pytest -q
+
+<span class="c"># the original long form still works</span>
 python scripts/receipt.py run \
   --repo /path/to/project \
   --watch-dir tests \

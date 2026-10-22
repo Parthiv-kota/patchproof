@@ -1,12 +1,14 @@
 <p align="center"><img src="assets/icon.svg" width="88" alt="PatchProof logo"></p>
 
-<h1 align="center">PatchProof</h1>
-<p align="center"><strong>Tests passed. Do they still match your code?</strong></p>
-<p align="center">Local check receipts for AI-assisted development.<br>A Codex plugin, a Python recorder, and a browser viewer.</p>
+<h1 align="center">patchproof</h1>
+<p align="center"><strong>Your test passed. Prove it still does.</strong></p>
+<p align="center">Agents edit code after the tests pass. patchproof keeps the evidence attached to the bytes it describes,<br>and tells you the moment that green check goes stale.</p>
 <p align="center"><a href="https://parthiv-kota.github.io/patchproof/">Website</a> · <a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
 <p align="center"><a href="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml"><img alt="Checks" src="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml/badge.svg"></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17634e"></a> <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-17634e"></p>
 
-PatchProof records the command you ran, its exit code, and fingerprints of the files you chose to watch. Before handing over a change, compare those files again. If they changed, the earlier pass no longer describes the current inputs.
+An agent runs your tests, they pass, and it says so honestly. Then the work continues — a follow-up edit, a second agent, a quick fix before the PR — and that sentence keeps its old meaning while the code underneath it changes.
+
+patchproof records the command, the exit code, and fingerprints of the files it watched. Run `pp audit` later and it tells you whether that result still describes your code.
 
 The Codex skills bring that habit into **review → fix → handoff**, with explanations a beginner can follow and evidence a maintainer can inspect.
 
@@ -22,9 +24,19 @@ The Codex skills bring that habit into **review → fix → handoff**, with expl
 
 A matching pass means the recorded command exited zero and the watched bytes match. It does **not** prove correctness, security, or complete test coverage. Receipts are editable local records, not signed attestations.
 
-## Try it in one minute
+## Three commands
 
-Download or clone this source, open a terminal in the `patchproof` folder, and run with Python 3.11 or newer:
+```sh
+pipx install .                   # Python 3.11+, standard library only
+pp verify -- pytest -q           # watch source, tests and manifests; record the result
+pp audit                         # nonzero exit if any receipt has gone stale
+```
+
+`pp` is the short name for `patchproof`. Nothing needs configuring: the default watch set is your source and test trees plus dependency manifests. Narrow it with `--watch-dir` or `--watch-glob` when you want to.
+
+A receipt reads `CHECK PASSED` only while the watched files still match. After an edit, `pp audit` says `changed_since_check` and names the files that moved.
+
+## The demo without installing anything
 
 ```sh
 python scripts/demo.py
@@ -65,9 +77,23 @@ Tested with **Codex CLI 0.160.0 on Windows**. Desktop picker activation and othe
 
 AI review and fixes use **your Codex model, tools, permissions, and usage allowance**. PatchProof does not bundle a model or free AI access. It has no automatic execution hooks or background model calls.
 
-## Record a check yourself
+## In CI
 
-From the PatchProof folder, replace the example project path and filenames with your own. Choose a new output filename each time:
+```yaml
+- uses: Parthiv-kota/patchproof@v0.2.0
+  with:
+    command: pytest -q
+```
+
+The step fails when the receipt no longer describes the code, and uploads the receipt as an artifact either way. A README badge generated from the same receipt can never read *up to date* while the files have moved:
+
+```sh
+pp badge --receipt patchproof-receipt.json --out pp.svg
+```
+
+## Record a check the long way
+
+Every flag is optional; this form is what the short commands wrap:
 
 ```sh
 python scripts/receipt.py run --repo /path/to/project --watch app.py --watch test_app.py --out receipt.json -- python -B -m unittest
@@ -96,7 +122,7 @@ Commands run with your normal account permissions. The recorder is **not a sandb
 
 | Evidence | Scope |
 |---|---|
-| 27 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, and safe output handling. |
+| 32 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, verify/audit/badge, and safe output handling. |
 | 13 JavaScript tests | Receipt parsing, comparison states, watched-file scope, per-file labels, and summary output. |
 | Controlled Codex integration | Installed all three skills; reproduced two failing tests, fixed the calculator without weakening tests, and detected a later edit. |
 | Browser walkthrough | Saved examples, receipt import, actual file comparison, path search, export fallback, and theme switching. |

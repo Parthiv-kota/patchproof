@@ -91,6 +91,56 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual(receipt.main(["run", "--repo", str(self.repo), "--out", str(self.repo / "x.json"),
                                        "--", sys.executable, "-c", "pass"]), 2)
 
+    def test_default_watches_cover_source_tests_and_manifests(self):
+        (self.repo / "src").mkdir(); (self.repo / "src" / "core.py").write_text("x=1\n", encoding="utf-8")
+        (self.repo / "tests").mkdir(); (self.repo / "tests" / "t.py").write_text("y=2\n", encoding="utf-8")
+        (self.repo / "package.json").write_text("{}", encoding="utf-8")
+        (self.repo / "notes.md").write_text("irrelevant", encoding="utf-8")
+        watched = receipt.default_watches(self.repo)
+        self.assertIn("src/core.py", watched)
+        self.assertIn("tests/t.py", watched)
+        self.assertIn("package.json", watched)
+        self.assertNotIn("notes.md", watched)
+
+    def test_verify_is_one_command_and_reports_staleness(self):
+        path = self.repo / "patchproof-receipt.json"
+        self.assertEqual(receipt.main(["verify", "--repo", str(self.repo), "--out", str(path),
+                                       "--quiet", "--", sys.executable, "-c", "pass"]), 0)
+        self.assertEqual(json.loads(path.read_text())["check_status"], "passed")
+        (self.repo / "app.py").write_text("value = 99\n", encoding="utf-8")
+        self.assertEqual(receipt.main(["audit", "--repo", str(self.repo)]), 1)
+
+    def test_audit_is_clean_when_files_match(self):
+        path = self.repo / "patchproof-receipt.json"
+        receipt.main(["verify", "--repo", str(self.repo), "--out", str(path),
+                      "--quiet", "--", sys.executable, "-c", "pass"])
+        self.assertEqual(receipt.main(["audit", "--repo", str(self.repo)]), 0)
+        self.assertEqual(receipt.main(["audit", "--repo", str(self.repo), "--json"]), 0)
+
+    def test_badge_reflects_state_and_cannot_claim_a_pass(self):
+        result = self.run_check()
+        self.assertIn("up to date", receipt.badge_svg("current_passed"))
+        self.assertIn("out of date", receipt.badge_svg("changed_since_check"))
+        self.assertIn("failing", receipt.badge_svg("current_failed"))
+        self.assertIn("unknown", receipt.badge_svg("snapshot_unavailable"))
+        self.assertNotIn("up to date", receipt.badge_svg("changed_since_check"))
+        # A stale receipt must produce a stale badge, never a green one.
+        path = self.repo / "r.json"
+        self.assertEqual(receipt.main(["verify", "--repo", str(self.repo), "--out", str(path),
+                                       "--quiet", "--", sys.executable, "-c", "pass"]), 0)
+        (self.repo / "app.py").write_text("changed", encoding="utf-8")
+        self.assertEqual(receipt.main(["badge", "--repo", str(self.repo), "--receipt", str(path),
+                                      "--out", str(self.repo / "b.svg")]), 1)
+        self.assertIn("out of date", (self.repo / "b.svg").read_text(encoding="utf-8"))
+
+    def test_summary_names_the_files_that_moved(self):
+        result = self.run_check()
+        (self.repo / "app.py").write_text("value = 7\n", encoding="utf-8")
+        stale = receipt.inspect_receipt(self.repo, result)
+        text = receipt.summarise(stale, result)
+        self.assertIn("STALE", text)
+        self.assertIn("app.py", text)
+
     def test_unsafe_and_missing_paths_are_rejected(self):
         for name in ["../outside", "C:/Windows/system.ini", "/etc/passwd", "missing.py", "a/../app.py"]:
             with self.subTest(name=name), self.assertRaises((receipt.ReceiptError, OSError)):

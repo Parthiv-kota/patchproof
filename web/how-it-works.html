@@ -52,7 +52,7 @@
     <div class="wrap">
       <div class="section-head">
         <div class="eyebrow">The lifecycle</div>
-        <h2>What happens during <code>patchproof run</code></h2>
+        <h2>What happens during <code>pp verify</code></h2>
       </div>
       <div class="steps">
         <div class="step">
@@ -90,6 +90,33 @@
             <p>The receipt is written only if the target path does not already exist. Existing receipts and reports are never replaced, so a passing record cannot be quietly rewritten by a later run.</p>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">The distinction that matters</div>
+        <h2>Stale is not failed. That is why it is easy to miss.</h2>
+        <p>A failed test announces itself: red, loud, blocking. A stale pass does the opposite — it keeps looking green, keeps being quoted in the PR, and is only wrong in the one way nobody checks.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card">
+          <h3>Failed</h3>
+          <p>The command ran and exited non-zero. You will see it, your CI will see it, and it will stop the merge.</p>
+        </article>
+        <article class="card">
+          <h3>Stale</h3>
+          <p>The command ran, exited zero, and was true for the files at that moment. Those files have since changed. Nothing is red, because nothing is failing — the evidence is just about different code.</p>
+        </article>
+        <article class="card">
+          <h3>Unknown</h3>
+          <p>No receipt, an invalid receipt, or no after-check snapshot. Silence is not a pass, and patchproof says so out loud instead of guessing.</p>
+        </article>
+      </div>
+      <div class="note-band">
+        <p><strong>So there are two questions, not one.</strong> Did the command succeed — that is what a test runner answers. Does the answer still describe this code — that is what patchproof answers. A receipt keeps both facts together so neither can be quoted without the other.</p>
       </div>
     </div>
   </section>

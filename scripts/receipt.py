@@ -167,6 +167,92 @@ def inspect_receipt(root, receipt):
             "check_status": receipt["check_status"]}
 
 
+DEFAULT_PREFIXES = ("src/", "lib/", "app/", "pkg/", "tests/", "test/", "spec/")
+DEFAULT_SUFFIXES = (".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".go", ".rs", ".rb",
+                    ".java", ".kt", ".cs", ".php", ".c", ".h", ".cpp", ".swift", ".ex", ".exs",
+                    ".toml", ".ini", ".cfg", ".lock", ".json", ".yaml", ".yml", ".lockfile")
+
+
+def default_watches(root):
+    """Everything PatchProof watches when the user names nothing.
+
+    Source and test trees plus dependency manifests. Deliberately chatty: a
+    check that silently watched too little would report freshness it cannot
+    know about, which is the failure this tool exists to prevent.
+    """
+    root = Path(root).resolve(strict=True)
+    found = []
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if any(part in SKIP_DIRS for part in relative.parts):
+            continue
+        if path.is_symlink() or not path.is_file():
+            continue
+        name = relative.as_posix()
+        if name.startswith(DEFAULT_PREFIXES) or relative.name in DEPENDENCY_MANIFESTS:
+            found.append(name)
+        elif len(relative.parts) == 1 and path.suffix in DEFAULT_SUFFIXES:
+            found.append(name)
+    if len(found) > MAX_FILES:
+        raise ReceiptError(f"Default watch selection matched {len(found)} files; the limit is {MAX_FILES}. Use --watch-dir to narrow it.")
+    return sorted(found)
+
+
+DEPENDENCY_MANIFESTS = {"package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
+                        "pyproject.toml", "requirements.txt", "poetry.lock", "uv.lock",
+                        "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "Gemfile",
+                        "Gemfile.lock", "composer.json", "pom.xml", "build.gradle"}
+
+BADGE_COLORS = {"up_to_date": "#17634e", "failing": "#b45309",
+                "out_of_date": "#b45309", "unknown": "#526066"}
+
+
+def badge_svg(state, label="check"):
+    """A small, self-contained SVG badge. `state` is a resolve_state() value."""
+    if state == "current_passed":
+        text, word = label, "up to date"
+    elif state in {"current_failed", "current_error", "current_timed_out"}:
+        text, word = label, "failing"
+    elif state in {"changed_since_check", "changed_during_check"}:
+        text, word = label, "out of date"
+    else:
+        text, word = label, "unknown"
+    color = BADGE_COLORS.get(word.replace(" ", "_"), BADGE_COLORS["unknown"])
+    width = 8 * len(text) + 20, 8 * len(word) + 20
+    total = width[0] + width[1]
+    return ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"20\" role=\"img\" "
+            "aria-label=\"{}: {}\">"
+            "<title>{}: {}</title>"
+            "<rect width=\"{}\" height=\"20\" rx=\"3\" fill=\"#152b35\"/>"
+            "<rect x=\"{}\" width=\"{}\" height=\"20\" rx=\"3\" fill=\"{}\"/>"
+            "<g fill=\"#ffffff\" font-family=\"Verdana,DejaVu Sans,sans-serif\" font-size=\"11\">"
+            "<text x=\"10\" y=\"14\">{}</text>"
+            "<text x=\"{}\" y=\"14\">{}</text></g></svg>").format(
+        total, label, word, label, word, total, width[0], width[1], color,
+        html.escape(text, quote=True), width[0] + 10, html.escape(word, quote=True))
+
+
+def summarise(result, receipt):
+    """One human paragraph. Never claims more than the state supports."""
+    state, changed = result["state"], result["changed_files"]
+    watched = result["watched_count"]
+    if state == "current_passed":
+        return f"CHECK PASSED. {watched} watched file(s) unchanged since the run."
+    if state == "changed_since_check":
+        first = ", ".join(changed[:3]) + (f" (+{len(changed) - 3} more)" if len(changed) > 3 else "")
+        return (f"STALE. {len(changed)} of {watched} watched file(s) changed since that check "
+                f"passed: {first}. The recorded pass does not describe the current code.")
+    if state == "changed_during_check":
+        return "UNRELIABLE. Watched files changed while the command was running; rerun on stable inputs."
+    if state == "current_failed":
+        return f"CHECK FAILED with exit code {receipt.get('exit_code')}. Watched files still match that run."
+    if state == "current_timed_out":
+        return "CHECK TIMED OUT. The command did not finish inside its limit."
+    if state == "current_error":
+        return "CHECK DID NOT START. No verification was recorded."
+    return "UNKNOWN. The after-check snapshot was unavailable, so freshness cannot be established."
+
+
 LABELS = {
     "snapshot_unavailable": ("Files could not be rechecked", "The after-check snapshot was unavailable. Inspect the watched files and run again."),
     "current_passed": ("Check passed", "The selected command exited successfully. The watched files still match."),
@@ -222,8 +308,83 @@ def main(argv=None):
     status.add_argument("--repo", required=True, type=Path)
     status.add_argument("--receipt", required=True, type=Path)
     status.add_argument("--html", type=Path)
+    verify = sub.add_parser("verify", help="Watch sensible defaults, run the command, report plainly")
+    verify.add_argument("--repo", type=Path, default=Path("."))
+    verify.add_argument("--watch", action="append", default=[])
+    verify.add_argument("--watch-dir", action="append", default=[])
+    verify.add_argument("--watch-glob", action="append", default=[])
+    verify.add_argument("--out", type=Path, default=Path("patchproof-receipt.json"))
+    verify.add_argument("--badge", type=Path, help="Write a badge SVG for this result")
+    verify.add_argument("--timeout", type=int, default=600)
+    verify.add_argument("--quiet", action="store_true")
+    verify.add_argument("command", nargs=argparse.REMAINDER)
+    audit = sub.add_parser("audit", help="Find receipts in a repo and report which are stale")
+    audit.add_argument("--repo", type=Path, default=Path("."))
+    audit.add_argument("--glob", default="**/*receipt*.json")
+    audit.add_argument("--json", action="store_true")
+    badge = sub.add_parser("badge", help="Render a badge SVG from an existing receipt")
+    badge.add_argument("--repo", type=Path, default=Path("."))
+    badge.add_argument("--receipt", required=True, type=Path)
+    badge.add_argument("--out", required=True, type=Path)
+    badge.add_argument("--label", default="check")
     args = parser.parse_args(argv)
     try:
+        if args.action == "verify":
+            command = args.command[1:] if args.command[:1] == ["--"] else args.command
+            if not command:
+                raise ReceiptError("Name the command to verify, for example: verify -- pytest -q")
+            watched = (expand_watches(args.repo, args.watch, args.watch_dir, args.watch_glob)
+                       if (args.watch or args.watch_dir or args.watch_glob)
+                       else default_watches(args.repo))
+            if args.out.exists():
+                raise ReceiptError("Choose a new receipt path; existing files are never replaced.")
+            if not args.out.parent.is_dir():
+                raise ReceiptError("The receipt output directory must already exist.")
+            record = run_check(args.repo, watched, command, args.timeout)
+            write_new(args.out, json.dumps(record, indent=2, ensure_ascii=True) + "\n")
+            result = inspect_receipt(args.repo, record)
+            if args.badge:
+                write_new(args.badge, badge_svg(result["state"]))
+            if not args.quiet:
+                print(summarise(result, record))
+                print(f"receipt: {args.out} · {len(watched)} file(s) watched · exit {record['exit_code']}")
+            return 0 if result["state"] == "current_passed" else 1
+        if args.action == "audit":
+            root = Path(args.repo).resolve(strict=True)
+            found, rows = sorted(root.glob(args.glob)), []
+            for path in found:
+                if path.stat().st_size > 2 * 1024 * 1024:
+                    rows.append({"receipt": path.relative_to(root).as_posix(), "state": "current_error",
+                                 "detail": "receipt too large to inspect"})
+                    continue
+                try:
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                    result = inspect_receipt(root, record)
+                    rows.append({"receipt": path.relative_to(root).as_posix(),
+                                 "state": result["state"], "changed": result["changed_files"],
+                                 "command": record.get("command", [])})
+                except (ReceiptError, OSError, ValueError, KeyError):
+                    rows.append({"receipt": path.relative_to(root).as_posix(), "state": "current_error",
+                                 "detail": "invalid receipt"})
+            stale = [r for r in rows if r["state"] in {"changed_since_check", "changed_during_check"}]
+            if args.json:
+                print(json.dumps({"receipts": rows, "stale": len(stale)}, indent=2))
+            else:
+                if not rows:
+                    print(f"No receipts found under {args.glob}. Run `verify` first.")
+                for row in rows:
+                    print(f"{row['state']:>22}  {row['receipt']}")
+                if rows:
+                    print(f"\n{len(rows)} receipt(s), {len(stale)} out of date.")
+            return 0 if not stale else 1
+        if args.action == "badge":
+            if args.receipt.stat().st_size > 2 * 1024 * 1024:
+                raise ReceiptError("Receipt is too large.")
+            record = json.loads(args.receipt.read_text(encoding="utf-8"))
+            result = inspect_receipt(args.repo, record)
+            write_new(args.out, badge_svg(result["state"], args.label))
+            print(f"badge: {args.out} ({result['state']})")
+            return 0 if result["state"] == "current_passed" else 1
         if args.action == "run":
             if args.out.exists():
                 raise ReceiptError("Choose a new receipt path; existing files are never replaced.")

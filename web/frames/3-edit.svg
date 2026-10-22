@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<rect width="1080" height="620" rx="22" fill="#0d1b21"/>
+<circle cx="42" cy="40" r="7" fill="#f2635f"/><circle cx="68" cy="40" r="7" fill="#f2c14e"/><circle cx="94" cy="40" r="7" fill="#5fd38d"/>
+<text x="1040" y="48" text-anchor="end" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="20" fill="#7f9c98">patchproof</text>
+<line x1="0" y1="72" x2="1080" y2="72" stroke="#1d333a"/>
+<text x="64" y="190" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#65e4c2">$</text><text x="81" y="190" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#65e4c2"> # two hours later…</text><text x="64" y="254" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#7f9c98"></text><text x="64" y="254" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#7f9c98">  edited src/cart.py</text><text x="64" y="318" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#7f9c98"></text><text x="64" y="318" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="27" fill="#7f9c98">  "done, tests still pass"</text>
+<text x="64" y="580" font-family="system-ui,sans-serif" font-size="19" fill="#7f9c98">patchproof · your test passed, prove it still does</text>
+</svg>

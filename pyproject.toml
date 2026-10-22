@@ -35,6 +35,7 @@ Issues = "https://github.com/Parthiv-kota/patchproof/issues"
 Changelog = "https://github.com/Parthiv-kota/patchproof/blob/main/CHANGELOG.md"
 
 [project.scripts]
+pp = "patchproof.cli:main"
 patchproof = "patchproof.cli:main"
 patchproof-snapshot = "patchproof.snapshot_cli:main"
 
