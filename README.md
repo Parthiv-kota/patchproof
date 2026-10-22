@@ -3,7 +3,7 @@
 <h1 align="center">PatchProof</h1>
 <p align="center"><strong>Tests passed. Do they still match your code?</strong></p>
 <p align="center">Local check receipts for AI-assisted development.<br>A Codex plugin, a Python recorder, and a browser viewer.</p>
-<p align="center"><a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<p align="center"><a href="https://parthiv-kota.github.io/patchproof/">Website</a> · <a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
 <p align="center"><a href="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml"><img alt="Checks" src="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml/badge.svg"></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17634e"></a> <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-17634e"></p>
 
 PatchProof records the command you ran, its exit code, and fingerprints of the files you chose to watch. Before handing over a change, compare those files again. If they changed, the earlier pass no longer describes the current inputs.

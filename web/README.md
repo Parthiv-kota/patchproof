@@ -22,7 +22,11 @@ Open <http://127.0.0.1:8790/web/>. The receipt viewer is at <http://127.0.0.1:87
 
 ## Publishing
 
-The pages are relative-linked and use no absolute paths, so the `web/` folder can be served as-is by GitHub Pages, Cloudflare Pages, Netlify or any static host. To publish with GitHub Pages, point the source at the `web` folder on the branch you want to serve.
+`.github/workflows/pages.yml` publishes these pages to GitHub Pages on every push to `main` that touches `web/` or `assets/`. It assembles a `_site/` bundle, re-runs the link and policy checks against the assembled output, then deploys. Expected address: <https://parthiv-kota.github.io/patchproof/>.
+
+In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions** once. After that the workflow owns the site.
+
+Any static host works too: the pages are relative-linked and use no absolute paths.
 
 Pages intentionally ship a strict Content-Security-Policy with `script-src 'none'`: the site has no JavaScript, so nothing can fail silently in the browser.
 

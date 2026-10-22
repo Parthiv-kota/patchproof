@@ -7,6 +7,7 @@
 - Fixed the viewer labelling a saved demonstration's files as a live comparison; per-file states now come from `fileLabel()` in `site/core.mjs`.
 - Corrected the CI action versions, widened the Python matrix to 3.11–3.14, and made the demo step assert that all three report states were generated.
 - Added Dependabot configuration for actions and packaging metadata.
+- Added a GitHub Pages workflow that publishes the website and re-checks links and policy before deploying.
 - Documentation: expanded the documentation index and refreshed version references.
 
 ## 0.1.0 — initial preview

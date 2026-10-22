@@ -1,0 +1,82 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "assets/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Assemble the static site
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re, shutil
+          from pathlib import Path
+          src, out = Path("web"), Path("_site")
+          out.mkdir()
+          for file in src.glob("*.html"):
+              text = file.read_text(encoding="utf-8")
+              # The site is served from the repository root, so repository files
+              # referenced by relative paths are copied alongside it.
+              (out / file.name).write_text(text, encoding="utf-8")
+          shutil.copy(src / "style.css", out / "style.css")
+          (out / "assets").mkdir(exist_ok=True)
+          (out / "assets" / "icon.svg").write_bytes(Path("assets/icon.svg").read_bytes())
+          (out / ".nojekyll").write_text("", encoding="utf-8")
+          print(sorted(p.as_posix() for p in out.rglob("*") if p.is_file()))
+          PY
+      - name: Verify links and policy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          root = Path("_site")
+          pages = sorted(root.glob("*.html"))
+          assert pages, "no pages"
+          problems = []
+          for page in pages:
+              text = page.read_text(encoding="utf-8")
+              assert '<!doctype html>' in text.lower(), page
+              assert 'lang="en"' in text, page
+              assert "script-src 'none'" in text, f"{page}: unexpectedly allows scripts"
+              assert not re.search(r"<script|cdn\.|google-analytics|googletagmanager|<img[^>]+https?://", text), f"{page}: external or scripted content"
+              ids = re.findall(r'\sid="([^"]+)"', text)
+              assert len(ids) == len(set(ids)), f"{page}: duplicate id"
+              for target in re.findall(r'(?:href|src)="([^"#][^"]*)"', text):
+                  if re.match(r"^(https?:|mailto:)", target):
+                      continue
+                  if not (page.parent / target.split("#")[0]).resolve().exists():
+                      problems.append(f"{page}: missing {target}")
+          assert not problems, problems
+          print(f"{len(pages)} pages verified")
+          PY
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
