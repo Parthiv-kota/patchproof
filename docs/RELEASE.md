@@ -1,4 +1,4 @@
-# PatchProof v0.1.0
+# PatchProof v0.2.0
 
 **Initial preview: local check receipts for AI-assisted code.**
 
@@ -11,13 +11,14 @@ PatchProof helps answer whether an earlier “tests passed” still describes th
 - Check receipts with command outcomes and explicit watched-file fingerprints.
 - Detection of changed inputs during or after a check.
 - Browser import, local file comparison, path search, Markdown export, and light/dark themes.
+- Folder and glob watch selection, plus `patchproof` console commands from an editable install.
 - A runnable calculator demonstration, automated checks, and maintainer documentation.
 
 ## Requirements and verification
 
 Python 3.11+ runs the helpers. Git is needed for inventory. Node.js 24 is used for website tests. Codex access is needed only for the AI workflows; normal account limits apply.
 
-Local validation covers 24 Python and 12 JavaScript tests. A controlled Windows Codex CLI test loaded the installed skills, reproduced and fixed a calculator regression without weakening its tests, and detected a later edit. Read [the exact validation scope](VALIDATION.md) and [integration evidence](CODEX_TEST.md).
+Local validation covers 27 Python and 13 JavaScript tests. A controlled Windows Codex CLI test loaded the installed skills, reproduced and fixed a calculator regression without weakening its tests, and detected a later edit. Read [the exact validation scope](VALIDATION.md) and [integration evidence](CODEX_TEST.md).
 
 ## Known limits
 

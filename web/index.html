@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>PatchProof — the AI says it works. See what was checked.</title>
+<meta name="description" content="Local check receipts for AI-assisted development. Record the command, the exit code and fingerprints of the files you chose to watch — then find out when that pass stopped describing your code.">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="PatchProof — see what was checked">
+<meta property="og:description" content="Local check receipts for AI-assisted development. Tests passed. Do they still match your code?">
+<meta property="og:type" content="website">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="../assets/icon.svg" alt="">
+      <span>PatchProof<small>Confidence needs evidence</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </nav>
+    <a class="header-cta" href="install.html">Get started</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">v0.2.0 · early preview · MIT</div>
+        <h1>Tests passed.<br><em>Do they still match your code?</em></h1>
+        <p class="lede">PatchProof records the command you ran, its exit code, and fingerprints of the files you chose to watch. Before you hand over a change, compare those files again — if they moved, the earlier pass no longer describes what is in front of you.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="install.html">Try it in one minute <span aria-hidden="true">→</span></a>
+          <a class="btn btn-secondary" href="how-it-works.html">How the evidence works</a>
+        </div>
+        <p class="hero-note">Python standard library only. No account, no API key, no telemetry, nothing uploaded.</p>
+      </div>
+
+      <aside class="mock" aria-label="Example of a check receipt that has gone out of date">
+        <div class="mock-bar"><span class="dot" aria-hidden="true"></span> Local check receipt</div>
+        <div class="mock-body">
+          <span class="mock-status">● Result is out of date</span>
+          <div class="mock-row"><span>Command</span><strong>python -m unittest</strong></div>
+          <div class="mock-row"><span>Recorded exit code</span><strong>0</strong></div>
+          <div class="mock-row"><span>Ran</span><strong>2026-10-05 12:04 UTC</strong></div>
+          <div class="mock-row"><span>Watched files</span><strong>2</strong></div>
+          <div style="margin-top:14px">
+            <div class="mock-file"><span>calculator.py</span><b>changed</b></div>
+            <div class="mock-file"><span>test_calculator.py</span><i>matches</i></div>
+          </div>
+          <p class="mock-foot">The green check belongs to the bytes from that run — not to the file you have open now.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= PROBLEM ================= -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">The gap</div>
+        <h2>A green check mark is a claim about a moment.</h2>
+        <p>“Tests passed” is usually true when it is said and stale by the time it is read. Three edits later, nobody can tell which files the result actually covered — or whether it still applies at all.</p>
+      </div>
+      <table class="compare">
+        <thead>
+          <tr><th scope="col">Without a receipt</th><th scope="col">With PatchProof</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="no">“Tests passed.”</td>
+            <td class="yes">The exact command, its exit code, the time, and the watched-file list.</td>
+          </tr>
+          <tr>
+            <td class="no">Another edit happens after the test.</td>
+            <td class="yes">Changed fingerprints mark the old result as out of date, automatically.</td>
+          </tr>
+          <tr>
+            <td class="no">A reviewer cannot tell what was covered.</td>
+            <td class="yes">Explicit scope and limitations travel with the result.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= THREE PIECES ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Three small pieces</div>
+        <h2>Nothing to host, nothing to trust blindly.</h2>
+        <p>A recorder, a freshness check, and a viewer. Each one does a single job and says so in its own output.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card">
+          <span class="num">01</span>
+          <h3>Record</h3>
+          <p><code>patchproof run</code> hashes the watched files, runs your check command, hashes them again, and writes a local JSON receipt. No output is captured; the command's stdout stays in your terminal.</p>
+        </article>
+        <article class="card">
+          <span class="num">02</span>
+          <h3>Recheck</h3>
+          <p><code>patchproof status</code> re-hashes the same files today and reports one of seven states: passed, failed, changed during the check, changed since, timed out, error, or snapshot unavailable.</p>
+        </article>
+        <article class="card">
+          <span class="num">03</span>
+          <h3>Explain</h3>
+          <p>The browser viewer opens a receipt, compares your folder locally, searches watched paths, and exports a Markdown summary. Selected files are never uploaded.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEMO ================= -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">One minute, no setup</div>
+        <h2>A real failure, a real pass, and an old result.</h2>
+        <p>The demo builds a tiny calculator, catches a genuine bug, fixes it, records a passing test, and then edits the code again so you can watch the pass go stale. It only touches its own fixture folder.</p>
+      </div>
+      <pre><code><span class="c"># from the PatchProof source folder, Python 3.11+</span>
+python scripts/demo.py
+<span class="c"># → DEMO=/…/outputs/demo-xxxx/index.html</span></code></pre>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="../examples/README.md">Read the walkthrough <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="../site/index.html">Open the receipt viewer</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOR CODEX ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">With an agent</div>
+        <h2>Review → fix → handoff, with evidence attached.</h2>
+        <p>PatchProof ships three Codex skills. They guide the model; they do not grant permissions it would not otherwise have, and they never publish, message or deploy on their own.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card"><h3>Review</h3><p>Reads the change and the code it touches, then reports concrete regressions with a triggering input, not a list of worries.</p></article>
+        <article class="card"><h3>Fix</h3><p>Makes a focused correction and checks the relevant behaviour — without deleting the test that caught the bug.</p></article>
+        <article class="card"><h3>Handoff</h3><p>Summarises what changed, what actually ran, and what is still uncertain, in language a maintainer can act on.</p></article>
+      </div>
+      <div class="callout" style="margin-top:26px">
+        <p><strong>Bring your own model.</strong> AI review and fixes use your Codex account, tools and usage allowance. PatchProof does not bundle a model, a key, or free AI access — and its Python helpers work with no AI at all.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHAT IT DOES NOT PROVE ================= -->
+  <section class="band-deep">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" style="color:var(--mint)">Stated plainly</div>
+        <h2>A matching pass is not a proof.</h2>
+        <p>It means one recorded command exited zero and the watched bytes are unchanged. It does not mean the code is correct, secure, or well covered.</p>
+      </div>
+      <div class="grid grid-2">
+        <div>
+          <h3>What a receipt does show</h3>
+          <ul class="ticks">
+            <li>The executable and arguments that ran, and the exit code.</li>
+            <li>Which files you chose to watch, by SHA-256 fingerprint.</li>
+            <li>Whether those files changed during or after the run.</li>
+            <li>That the result is a local record you can re-check.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>What it cannot show</h3>
+          <ul class="ticks cross">
+            <li>Correctness, security, or complete test coverage.</li>
+            <li>Unwatched files, installed dependencies, environment variables.</li>
+            <li>Edits that were made and then undone between snapshots.</li>
+            <li>That a receipt was not edited — they are unsigned.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="btn-row"><a class="btn btn-secondary" href="limits.html">Read every limit →</a></div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section>
+    <div class="wrap-narrow">
+      <div class="section-head"><h2>Questions worth asking</h2></div>
+      <div class="faq">
+        <details>
+          <summary>Does PatchProof fix my code?</summary>
+          <p>No. An agent host such as Codex performs AI-assisted edits, following the bundled skills. The recorder runs the command you name, and the viewer only compares fingerprints. None of them edits your source on its own.</p>
+        </details>
+        <details>
+          <summary>Does anything leave my computer?</summary>
+          <p>The helpers contain no network client and the viewer has no upload endpoint — it hashes selected files in the browser and keeps the result in memory. Your chosen check command may use the network, and your AI host's data policy applies separately when it reads your project.</p>
+        </details>
+        <details>
+          <summary>Is this a sandbox?</summary>
+          <p>No. Commands run with your normal account permissions and can modify files or reach the network. Read the command before you record it, and keep secrets out of arguments — arguments are stored in the receipt.</p>
+        </details>
+        <details>
+          <summary>Why not just run the tests again?</summary>
+          <p>Sometimes you should. A receipt is for the case where you cannot — the machine is different, the dependency is gone, the reviewer is remote, or you simply need to know whether the result you were shown still describes the code you were given.</p>
+        </details>
+        <details>
+          <summary>Is this Ponytail?</summary>
+          <p>No. <a href="https://github.com/DietrichGebert/ponytail">Ponytail</a> inspired the focused-plugin format. PatchProof's code, skills and symbol were authored separately, and its purpose is keeping check evidence tied to watched files.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="band">
+    <div class="wrap-narrow" style="text-align:center">
+      <h2>Record one check. See what it tells you later.</h2>
+      <p class="lede" style="margin-inline:auto">Two commands, a JSON file, and a browser tab. If the second check says “out of date”, the receipt just earned its keep.</p>
+      <div class="btn-row" style="justify-content:center">
+        <a class="btn btn-primary" href="install.html">Install PatchProof <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="../docs/CLI.md">Command reference</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="index.html"><img src="../assets/icon.svg" alt=""><span>PatchProof<small>Confidence needs evidence</small></span></a>
+      <p>Local check receipts for AI-assisted development. Static site, no analytics, no cookies, no external requests.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <a href="../docs/README.md">Documentation index</a>
+      <a href="../docs/CLI.md">Command reference</a>
+      <a href="../examples/README.md">Example walkthrough</a>
+      <a href="../docs/ARCHITECTURE.md">Architecture</a>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <a href="../CONTRIBUTING.md">Contributing</a>
+      <a href="../SECURITY.md">Security</a>
+      <a href="../PRIVACY.md">Privacy</a>
+      <a href="../CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <span>MIT licensed · v0.2.0 early preview · Not a security audit, not a correctness guarantee.</span>
+    <span><a href="https://github.com/Parthiv-kota/patchproof">github.com/Parthiv-kota/patchproof</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

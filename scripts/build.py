@@ -30,13 +30,14 @@ def main():
         front = content.split("---", 2)[1]
         assert re.search(r"^name: " + re.escape(skill.parent.name) + r"$", front, re.M)
         assert re.search(r"^description: .+", front, re.M)
-    top = {"plugin.json", "README.md", "LICENSE", "PRIVACY.md", ".gitignore", "INSTALL.md", "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md", "AUTHORS.md"}
-    folders = {".codex-plugin", ".agents", ".github", "assets", "docs", "scripts", "skills", "tests", "site", "examples"}
+    top = {"plugin.json", "pyproject.toml", "README.md", "LICENSE", "PRIVACY.md", ".gitignore", "INSTALL.md", "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md", "AUTHORS.md"}
+    folders = {".codex-plugin", ".agents", ".github", "assets", "docs", "scripts", "skills", "tests", "site", "web", "examples", "patchproof"}
     private_notes = {"docs/GITHUB_PUBLISHING_KIT.md", "docs/OSS_READINESS.md", "docs/INSPIRATION.md"}
     files = sorted(p for p in ROOT.rglob("*") if p.is_file()
                    and (p.relative_to(ROOT).as_posix() in top or p.relative_to(ROOT).parts[0] in folders)
                    and p.relative_to(ROOT).as_posix() not in private_notes
-                   and "__pycache__" not in p.parts and p.suffix not in {".pyc", ".pyo"})
+                   and "__pycache__" not in p.parts and p.suffix not in {".pyc", ".pyo"}
+                   and not any(part.endswith(".egg-info") for part in p.relative_to(ROOT).parts))
     assert all(not p.is_symlink() for p in files)
     marketplace = json.loads((ROOT / ".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
     assert marketplace["name"] == "patchproof-local"

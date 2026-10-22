@@ -19,6 +19,47 @@ class ReceiptError(Exception):
     pass
 
 
+SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv", "venv",
+             ".mypy_cache", ".pytest_cache", ".ruff_cache", "dist", "build", ".idea", ".vscode"}
+
+
+def _relative_files(root, base):
+    """Yield project-relative POSIX paths for every regular file under base."""
+    for path in sorted(base.rglob("*")):
+        relative = path.relative_to(root)
+        if any(part in SKIP_DIRS for part in relative.parts):
+            continue
+        if path.is_symlink() or not path.is_file():
+            continue
+        yield relative.as_posix()
+
+
+def expand_watches(root, names=(), dirs=(), patterns=()):
+    """Turn explicit paths, directories and globs into a validated, sorted watch list."""
+    root = Path(root).resolve(strict=True)
+    if not root.is_dir():
+        raise ReceiptError("The project directory does not exist.")
+    found = set(names)
+    for name in dirs:
+        target = root / name
+        if not target.is_dir():
+            raise ReceiptError("Watch directories must exist inside the project: " + str(name))
+        found.update(_relative_files(root, target))
+    for pattern in patterns:
+        if PurePosixPath(pattern).is_absolute() or ".." in PurePosixPath(pattern).parts:
+            raise ReceiptError("Watch patterns must stay inside the project.")
+        for path in root.glob(pattern):
+            relative = path.relative_to(root)
+            if any(part in SKIP_DIRS for part in relative.parts) or path.is_symlink() or not path.is_file():
+                continue
+            found.add(relative.as_posix())
+    if not found:
+        raise ReceiptError("No files matched. Check --watch, --watch-dir and --watch-glob.")
+    if len(found) > MAX_FILES:
+        raise ReceiptError(f"Watch selection matched {len(found)} files; the limit is {MAX_FILES}.")
+    return sorted(found)
+
+
 def fingerprint(root, names, allow_missing=False):
     root = Path(root).resolve(strict=True)
     if not root.is_dir() or not 1 <= len(names) <= MAX_FILES:
@@ -171,7 +212,9 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="action", required=True)
     run = sub.add_parser("run")
     run.add_argument("--repo", required=True, type=Path)
-    run.add_argument("--watch", required=True, action="append", help="Project-relative file; repeat for every input")
+    run.add_argument("--watch", action="append", default=[], help="Project-relative file; repeat for every input")
+    run.add_argument("--watch-dir", action="append", default=[], help="Project-relative folder; watches every file inside it")
+    run.add_argument("--watch-glob", action="append", default=[], help="Project-relative glob such as 'src/**/*.py'")
     run.add_argument("--out", required=True, type=Path)
     run.add_argument("--timeout", type=int, default=120)
     run.add_argument("command", nargs=argparse.REMAINDER)
@@ -187,7 +230,10 @@ def main(argv=None):
             if not args.out.parent.is_dir():
                 raise ReceiptError("The receipt output directory must already exist.")
             command = args.command[1:] if args.command[:1] == ["--"] else args.command
-            receipt = run_check(args.repo, args.watch, command, args.timeout)
+            if not (args.watch or args.watch_dir or args.watch_glob):
+                raise ReceiptError("Watch at least one file with --watch, --watch-dir or --watch-glob.")
+            watched = expand_watches(args.repo, args.watch, args.watch_dir, args.watch_glob)
+            receipt = run_check(args.repo, watched, command, args.timeout)
             write_new(args.out, json.dumps(receipt, indent=2, ensure_ascii=True) + "\n")
         else:
             if args.receipt.stat().st_size > 2 * 1024 * 1024:

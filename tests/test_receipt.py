@@ -59,6 +59,38 @@ class ReceiptTests(unittest.TestCase):
         result = self.run_check("import time; time.sleep(30)", timeout=1)
         self.assertEqual(receipt.inspect_receipt(self.repo, result)["state"], "current_timed_out")
 
+    def test_expand_watches_from_directories_and_globs(self):
+        (self.repo / "pkg").mkdir()
+        (self.repo / "pkg" / "one.py").write_text("a = 1\n", encoding="utf-8")
+        (self.repo / "pkg" / "two.py").write_text("b = 2\n", encoding="utf-8")
+        (self.repo / "pkg" / "notes.txt").write_text("n\n", encoding="utf-8")
+        (self.repo / "pkg" / "__pycache__").mkdir()
+        (self.repo / "pkg" / "__pycache__" / "one.cpython-312.pyc").write_bytes(b"x")
+        watched = receipt.expand_watches(self.repo, dirs=["pkg"])
+        self.assertEqual(watched, ["pkg/notes.txt", "pkg/one.py", "pkg/two.py"])
+        self.assertEqual(receipt.expand_watches(self.repo, patterns=["pkg/*.py"]),
+                         ["pkg/one.py", "pkg/two.py"])
+        self.assertEqual(receipt.expand_watches(self.repo, names=["app.py"], dirs=["pkg"]),
+                         ["app.py", "pkg/notes.txt", "pkg/one.py", "pkg/two.py"])
+
+    def test_expand_watches_rejects_unsafe_or_empty_selections(self):
+        for kwargs in ({"dirs": ["../outside"]}, {"patterns": ["/etc/*"]},
+                       {"patterns": ["../*"]}, {"patterns": ["nothing/*.py"]}, {}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(receipt.ReceiptError):
+                receipt.expand_watches(self.repo, **kwargs)
+
+    def test_cli_accepts_watch_dir_and_glob(self):
+        (self.repo / "pkg").mkdir()
+        (self.repo / "pkg" / "one.py").write_text("a = 1\n", encoding="utf-8")
+        path = self.repo / "dir-receipt.json"
+        code = receipt.main(["run", "--repo", str(self.repo), "--watch-dir", "pkg",
+                             "--out", str(path), "--", sys.executable, "-c", "pass"])
+        self.assertEqual(code, 0)
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(sorted(saved["before"]), ["pkg/one.py"])
+        self.assertEqual(receipt.main(["run", "--repo", str(self.repo), "--out", str(self.repo / "x.json"),
+                                       "--", sys.executable, "-c", "pass"]), 2)
+
     def test_unsafe_and_missing_paths_are_rejected(self):
         for name in ["../outside", "C:/Windows/system.ini", "/etc/passwd", "missing.py", "a/../app.py"]:
             with self.subTest(name=name), self.assertRaises((receipt.ReceiptError, OSError)):

@@ -16,3 +16,10 @@ test('after snapshot cannot silently omit watched files', () => {const r=make();
 test('invalid digests are rejected', () => {const r=make();r.before['src/app.py']='not-a-hash';assert.throws(()=>validateReceipt(r));});
 test('export names its scope and staleness limits', () => {const r=make();const text=summaryMarkdown(r,compareReceipt(r,{}));assert.match(text,/Result is out of date/);assert.match(text,/unsigned records/);assert.match(text,/src\/app.py/);});
 test('example exports cannot masquerade as a live check', () => {const r=make();assert.match(summaryMarkdown(r,compareReceipt(r,{'src/app.py':hash}),true),/Saved demonstration snapshot/);});
+test('per-file labels distinguish saved snapshots from a live comparison', async () => {
+  const {fileLabel} = await import('../site/core.mjs');
+  assert.equal(fileLabel('src/app.py', {state:'not_compared', changes:[]}, false), 'Not compared');
+  assert.equal(fileLabel('src/app.py', {state:'current_passed', changes:[]}, true), 'Matches saved snapshot');
+  assert.equal(fileLabel('src/app.py', {state:'current_passed', changes:[]}, false), 'Matches before snapshot');
+  assert.equal(fileLabel('src/app.py', {state:'changed_since_check', changes:['src/app.py']}, false), 'Changed / missing');
+});

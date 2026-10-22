@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Install PatchProof — one minute, no account</title>
+<meta name="description" content="Install PatchProof from source, run the demo, record your first check, and optionally add the Codex plugin. Python 3.11+ only.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="../assets/icon.svg" alt="">
+      <span>PatchProof<small>Confidence needs evidence</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Overview</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html" aria-current="page">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </nav>
+    <a class="header-cta" href="https://github.com/Parthiv-kota/patchproof">View source</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap-narrow">
+      <div class="eyebrow">Install</div>
+      <h1>One minute, no account.</h1>
+      <p class="lede">PatchProof is a folder of Python and static files. Clone or download it, run the demo, and you have seen the whole idea. No AI host, no API key, no build step.</p>
+      <dl class="kv" style="margin-top:24px">
+        <dt>Requires</dt><dd>Python 3.11+</dd>
+        <dt>Optional</dt><dd>Git (change inventory) · Node.js 24 (website tests) · Codex CLI (AI workflows)</dd>
+        <dt>Dependencies</dt><dd>none — standard library only</dd>
+        <dt>Network</dt><dd>never, from PatchProof itself</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head"><div class="eyebrow">Fast path</div><h2>Run the demo</h2></div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Get the source</h3>
+            <pre><code>git clone https://github.com/Parthiv-kota/patchproof.git
+cd patchproof</code></pre>
+            <p class="muted" style="font-size:14px">Or use <strong>Code → Download ZIP</strong> and extract it. Keep the hidden <code>.agents</code> and <code>.codex-plugin</code> folders; on Windows, a normal local folder beats a synced OneDrive one.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Watch a real failure become stale</h3>
+            <pre><code>python scripts/demo.py</code></pre>
+            <p>It creates an isolated calculator, fails a test on purpose, fixes it, records the pass, then edits the code again. Open the <code>DEMO=…</code> path it prints.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Open the viewer</h3>
+            <pre><code>python -m http.server 8790 --bind 127.0.0.1</code></pre>
+            <p>Then visit <a href="http://127.0.0.1:8790/site/">127.0.0.1:8790/site/</a> for the receipt viewer, or <a href="http://127.0.0.1:8790/web/">127.0.0.1:8790/web/</a> for this site. Both are static; stop the server with Ctrl+C.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Your own project</div>
+        <h2>Record your first check</h2>
+        <p>Choose a command you already trust — the test command you would run by hand — and name the files it depends on.</p>
+      </div>
+      <pre><code><span class="c"># watch a folder and a pattern instead of listing every file</span>
+python scripts/receipt.py run \
+  --repo /path/to/project \
+  --watch-dir tests \
+  --watch-glob 'src/**/*.py' \
+  --out receipt.json \
+  -- python -B -m pytest -q
+
+<span class="c"># later, or before you hand the change over</span>
+python scripts/receipt.py status --repo /path/to/project --receipt receipt.json --html report.html</code></pre>
+      <p>On Windows, quote the project path: <code>--repo 'C:\Projects\my-app'</code>. Output paths are relative to your current folder; the check itself runs inside <code>--repo</code>.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Optional</div>
+        <h2>Install the commands globally</h2>
+        <p>An editable install gives you <code>patchproof</code> and <code>patchproof-snapshot</code>, so nothing depends on where the source folder sits.</p>
+      </div>
+      <pre><code>pipx install .        <span class="c"># isolated, recommended</span>
+<span class="c"># or: python -m pip install -e .</span>
+
+patchproof run --repo . --watch-dir tests --out receipt.json -- python -B -m pytest -q
+patchproof status --repo . --receipt receipt.json
+patchproof-snapshot --repo . --scope working</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Optional</div>
+        <h2>Add the Codex plugin</h2>
+        <p>Tested with Codex CLI 0.160.0 on Windows. Sign in to Codex normally first; your account's usage limits apply.</p>
+      </div>
+      <pre><code><span class="c"># from the PatchProof folder</span>
+codex plugin marketplace add .
+codex plugin add patchproof@patchproof-local
+codex plugin list --marketplace patchproof-local --json</code></pre>
+      <p>Start a fresh Codex session inside the project you want to review, then ask:</p>
+      <div class="callout">
+        <p>Use PatchProof to review my changes, explain any bugs in plain English, and record the checks you run. Ask before publishing anything.</p>
+      </div>
+      <p class="muted" style="font-size:14px">Desktop picker activation and other AI hosts are unverified. If installing from a synced OneDrive folder fails to copy plugin files, extract the archive to a regular local folder and register that one.</p>
+    </div>
+  </section>
+
+  <section class="band-deep">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" style="color:var(--mint)">Uninstall</div>
+        <h2>It leaves nothing behind.</h2>
+      </div>
+      <pre><code>codex plugin marketplace remove patchproof-local   <span class="c"># if you installed the plugin</span>
+pip uninstall patchproof                           <span class="c"># if you installed the commands</span>
+rm -rf /path/to/patchproof                         <span class="c"># the source folder</span></code></pre>
+      <p>Receipts and reports you generated are ordinary files wherever you chose to write them — delete those yourself. PatchProof writes nothing to your project and adds no attribution comments.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap-narrow" style="text-align:center">
+      <h2>Something unclear?</h2>
+      <p class="lede" style="margin-inline:auto">Small reproductions and clearer explanations are the most useful kind of report.</p>
+      <div class="btn-row" style="justify-content:center">
+        <a class="btn btn-primary" href="https://github.com/Parthiv-kota/patchproof/issues/new/choose">Open an issue <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="../INSTALL.md">Full install guide</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="index.html"><img src="../assets/icon.svg" alt=""><span>PatchProof<small>Confidence needs evidence</small></span></a>
+      <p>Local check receipts for AI-assisted development. Static site, no analytics, no cookies, no external requests.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <a href="../docs/README.md">Documentation index</a>
+      <a href="../docs/CLI.md">Command reference</a>
+      <a href="../examples/README.md">Example walkthrough</a>
+      <a href="../docs/ARCHITECTURE.md">Architecture</a>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <a href="../CONTRIBUTING.md">Contributing</a>
+      <a href="../SECURITY.md">Security</a>
+      <a href="../PRIVACY.md">Privacy</a>
+      <a href="../CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <span>MIT licensed · v0.2.0 early preview · Not a security audit, not a correctness guarantee.</span>
+    <span><a href="https://github.com/Parthiv-kota/patchproof">github.com/Parthiv-kota/patchproof</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

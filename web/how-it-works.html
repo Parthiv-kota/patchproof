@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>How PatchProof works — fingerprints, states, and scope</title>
+<meta name="description" content="How a PatchProof receipt is built: watched-file fingerprints before and after a command, the seven freshness states, and the exact boundaries of the evidence.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="../assets/icon.svg" alt="">
+      <span>PatchProof<small>Confidence needs evidence</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Overview</a>
+      <a href="how-it-works.html" aria-current="page">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </nav>
+    <a class="header-cta" href="install.html">Get started</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap-narrow">
+      <div class="eyebrow">Mechanism</div>
+      <h1>Three hashes and a command.</h1>
+      <p class="lede">A receipt is small on purpose. Everything it claims comes from comparing the same list of files at three moments: before the check, right after it, and whenever you look again.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">The lifecycle</div>
+        <h2>What happens during <code>patchproof run</code></h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Expand the watch list</h3>
+            <p>Explicit files, folders and globs are resolved once, inside the project root. Symbolic links, absolute paths and parent traversal are rejected; VCS metadata, virtual environments, caches and dependency folders are skipped.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Fingerprint the inputs</h3>
+            <p>Each watched file is read once and hashed with SHA-256. Only digests are kept — never file contents, never the command's output.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Run the command you named</h3>
+            <p>Launched directly, without a shell, inside the project root, with a timeout. Stdout and stderr stay in your terminal. The exit code and duration go into the receipt.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Fingerprint again</h3>
+            <p>If the before and after digests differ, the check modified its own inputs — a distinct state from an ordinary pass, and one that is easy to miss without a second sample.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n" aria-hidden="true"></div>
+          <div>
+            <h3>Write a new file, never overwrite</h3>
+            <p>The receipt is written only if the target path does not already exist. Existing receipts and reports are never replaced, so a passing record cannot be quietly rewritten by a later run.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Seven states</div>
+        <h2>What <code>patchproof status</code> can say</h2>
+        <p>Each state names the next action, not just the verdict. If several problems apply, a changed-during-check or an unavailable snapshot takes precedence over later freshness.</p>
+      </div>
+      <table class="states">
+        <thead><tr><th scope="col">State</th><th scope="col">Meaning</th><th scope="col">Next step</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-good">current_passed</span></td><td>Exit zero; before, after and current watched bytes match.</td><td>Ask whether the command and the watched scope are sufficient.</td></tr>
+          <tr><td><span class="pill pill-warn">current_failed</span></td><td>The command exited non-zero; the bytes still match that run.</td><td>Investigate the failure — the receipt is honest about it.</td></tr>
+          <tr><td><span class="pill pill-warn">changed_since_check</span></td><td>A watched file changed or is missing since the recorded run.</td><td>Run the check again and write a new receipt.</td></tr>
+          <tr><td><span class="pill pill-warn">changed_during_check</span></td><td>Before and after fingerprints differ.</td><td>Inspect the mutation and rerun on stable inputs.</td></tr>
+          <tr><td><span class="pill pill-warn">current_timed_out</span></td><td>The command exceeded its time limit.</td><td>Investigate before choosing a longer limit.</td></tr>
+          <tr><td><span class="pill pill-warn">current_error</span></td><td>The command could not be launched.</td><td>Check the executable and environment.</td></tr>
+          <tr><td><span class="pill pill-warn">snapshot_unavailable</span></td><td>No usable after-check snapshot exists.</td><td>Resolve inaccessible inputs and rerun.</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:14px;margin-top:16px">Exit codes: <code>0</code> for <code>current_passed</code>, <code>1</code> for any other state, <code>2</code> for an input or tool error. The child command's own exit code is stored in the receipt, not passed through.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Data boundaries</div>
+        <h2>What is stored, and what is not.</h2>
+      </div>
+      <div class="grid grid-2">
+        <article class="card">
+          <h3>Stored in the receipt</h3>
+          <ul class="ticks">
+            <li>Schema version, scope and state.</li>
+            <li>The command's executable and arguments.</li>
+            <li>Exit code, start time, duration.</li>
+            <li>SHA-256 digests before and after the run.</li>
+            <li>A fixed, plain-language limits string.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Never stored</h3>
+          <ul class="ticks cross">
+            <li>File contents or diffs.</li>
+            <li>The command's stdout or stderr.</li>
+            <li>Environment variables or credentials.</li>
+            <li>Anything about other files in the project.</li>
+            <li>Any telemetry or usage event.</li>
+          </ul>
+        </article>
+      </div>
+      <div class="callout callout-warn" style="margin-top:26px">
+        <p><strong>Arguments and filenames are still data.</strong> They are stored verbatim and can be sensitive. Review a receipt before sharing it, and keep secrets on stdin or in the environment rather than in the command line.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">In the browser</div>
+        <h2>The viewer never runs your code.</h2>
+        <p>The static viewer loads a receipt JSON, asks for the project folder, and hashes only the watched paths in that folder using the browser's own crypto API.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card"><h3>Locked down</h3><p>A content-security policy forbids external scripts, uploads and frames. There is no network client in the page at all.</p></article>
+        <article class="card"><h3>Validated input</h3><p>Imported JSON is treated as data: shape, digests, path containment and size are checked before anything is rendered.</p></article>
+        <article class="card"><h3>Memory only</h3><p>Receipts and comparisons live in memory and disappear on reload. Export produces a Markdown summary you can review before sharing.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band-deep">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" style="color:var(--mint)">With an agent host</div>
+        <h2>Skills guide the model. They are not an enforcement layer.</h2>
+        <p>The three bundled Codex skills describe how to review a change, make a focused fix, and prepare a handoff. They operate inside the host's own permissions, approvals and usage limits, and they explicitly do not authorise publishing, messaging, deploying or installing dependencies.</p>
+      </div>
+      <pre><code>Codex skills       → review, focused fixes, factual handoffs
+snapshot.py        → read-only inventory of local Git changes
+receipt.py run     → watched hashes + chosen command + outcome
+receipt.py status  → compare current files with the recorded inputs
+Browser viewer     → open, compare and explain receipts locally</code></pre>
+      <div class="btn-row"><a class="btn btn-secondary" href="../docs/ARCHITECTURE.md">Architecture and boundaries →</a></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap-narrow" style="text-align:center">
+      <h2>Ready to record one?</h2>
+      <div class="btn-row" style="justify-content:center">
+        <a class="btn btn-primary" href="install.html">Install <span aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="limits.html">Read the limits first</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="index.html"><img src="../assets/icon.svg" alt=""><span>PatchProof<small>Confidence needs evidence</small></span></a>
+      <p>Local check receipts for AI-assisted development. Static site, no analytics, no cookies, no external requests.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <a href="how-it-works.html">How it works</a>
+      <a href="install.html">Install</a>
+      <a href="limits.html">Limits</a>
+      <a href="../site/index.html">Receipt viewer</a>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <a href="../docs/README.md">Documentation index</a>
+      <a href="../docs/CLI.md">Command reference</a>
+      <a href="../examples/README.md">Example walkthrough</a>
+      <a href="../docs/ARCHITECTURE.md">Architecture</a>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <a href="../CONTRIBUTING.md">Contributing</a>
+      <a href="../SECURITY.md">Security</a>
+      <a href="../PRIVACY.md">Privacy</a>
+      <a href="../CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <span>MIT licensed · v0.2.0 early preview · Not a security audit, not a correctness guarantee.</span>
+    <span><a href="https://github.com/Parthiv-kota/patchproof">github.com/Parthiv-kota/patchproof</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

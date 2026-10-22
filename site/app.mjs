@@ -1,4 +1,4 @@
-import {validateReceipt, compareReceipt, labels, summaryMarkdown} from './core.mjs';
+import {validateReceipt, compareReceipt, labels, summaryMarkdown, fileLabel} from './core.mjs';
 const $ = id => document.getElementById(id);
 let samples = [], selected = 0, receipt = null, result = null, isExample = false, generation = 0;
 const descriptions = [
@@ -50,7 +50,7 @@ function renderFiles() {
     const row = document.createElement('div'); row.className = 'file-row';
     const name = document.createElement('code'); name.textContent = path;
     const state = document.createElement('span');
-    state.textContent = result.state === 'not_compared' ? 'Not compared' : result.changes.includes(path) ? 'Changed / missing' : 'Matches before snapshot';
+    state.textContent = fileLabel(path, result, isExample);
     row.append(name, state); list.append(row);
   }
   if (!list.childElementCount) list.textContent = 'No matching paths.';

@@ -4,12 +4,13 @@
 <p align="center"><strong>Tests passed. Do they still match your code?</strong></p>
 <p align="center">Local check receipts for AI-assisted development.<br>A Codex plugin, a Python recorder, and a browser viewer.</p>
 <p align="center"><a href="INSTALL.md">Install</a> · <a href="examples/README.md">Try the demo</a> · <a href="docs/README.md">Documentation</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<p align="center"><a href="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml"><img alt="Checks" src="https://github.com/Parthiv-kota/patchproof/actions/workflows/checks.yml/badge.svg"></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17634e"></a> <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-17634e"></p>
 
 PatchProof records the command you ran, its exit code, and fingerprints of the files you chose to watch. Before handing over a change, compare those files again. If they changed, the earlier pass no longer describes the current inputs.
 
 The Codex skills bring that habit into **review → fix → handoff**, with explanations a beginner can follow and evidence a maintainer can inspect.
 
-**v0.1.0 · early preview · MIT · Python standard library only**
+**v0.2.0 · early preview · MIT · Python standard library only**
 
 ## See the difference
 
@@ -73,6 +74,20 @@ python scripts/receipt.py run --repo /path/to/project --watch app.py --watch tes
 python scripts/receipt.py status --repo /path/to/project --receipt receipt.json --html report.html
 ```
 
+Watching a whole folder or a pattern is usually easier than listing files:
+
+```sh
+python scripts/receipt.py run --repo /path/to/project --watch-dir tests --watch-glob 'src/**/*.py' --out receipt.json -- python -B -m pytest -q
+```
+
+Install it once and drop the `scripts/` prefix:
+
+```sh
+pipx install .        # or: pip install -e .
+patchproof run --repo /path/to/project --watch-dir tests --out receipt.json -- python -B -m pytest -q
+patchproof status --repo /path/to/project --receipt receipt.json
+```
+
 On Windows, use a quoted path such as `--repo 'C:\Projects\my-app'`. Repeat `--watch` for relevant source, tests, configuration, and lock files. Output paths are relative to the terminal's current folder; the check runs inside the named project.
 
 Commands run with your normal account permissions. The recorder is **not a sandbox**. Unwatched files, environment changes, installed dependencies, and edits restored between snapshots are outside its coverage. Existing receipt and report files are never replaced. [All options, states, and limits →](docs/CLI.md)
@@ -81,8 +96,8 @@ Commands run with your normal account permissions. The recorder is **not a sandb
 
 | Evidence | Scope |
 |---|---|
-| 24 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, and safe output handling. |
-| 12 JavaScript tests | Receipt parsing, comparison states, watched-file scope, and summary output. |
+| 27 Python tests | Git inventory, receipt validation, command outcomes, timeouts, file changes, watch expansion, and safe output handling. |
+| 13 JavaScript tests | Receipt parsing, comparison states, watched-file scope, per-file labels, and summary output. |
 | Controlled Codex integration | Installed all three skills; reproduced two failing tests, fixed the calculator without weakening tests, and detected a later edit. |
 | Browser walkthrough | Saved examples, receipt import, actual file comparison, path search, export fallback, and theme switching. |
 
@@ -96,6 +111,7 @@ snapshot.py        → read-only inventory of local Git changes
 receipt.py run     → watched hashes + chosen command + outcome
 receipt.py status  → compare current files with the recorded inputs
 Browser viewer    → open, compare, and explain receipts locally
+web/              → the static project website
 ```
 
 No third-party Python packages, build framework, database, or MCP server are required. See the [architecture and data boundaries](docs/ARCHITECTURE.md).

@@ -14,11 +14,20 @@ On Windows, replace `/path/to/project` with a quoted path such as `'C:\Projects\
 |---|---|
 | `--repo` | Existing project root; the command runs here. |
 | `--watch` | Existing file relative to that root. Repeat for each input. Use forward slashes. |
+| `--watch-dir` | Existing folder relative to that root; watches every regular file inside it. Repeatable. |
+| `--watch-glob` | Project-relative glob such as `'src/**/*.py'` or `'tests/test_*.py'`. Repeatable. |
 | `--out` | New receipt JSON path. Its parent folder must exist. |
 | `--timeout` | Whole seconds, 1–3600; default 120. |
 | `--` | Separates recorder options from the executable and its arguments. |
 
 Output paths are relative to your terminal's current directory, not `--repo`. Paths containing spaces must be quoted. The command is launched directly without a shell. Shell operators such as pipes or `&&` are not interpreted. Direct `.bat`, `.cmd`, and `.ps1` executables are rejected. Use an appropriate executable for a trusted check.
+
+At least one of `--watch`, `--watch-dir` or `--watch-glob` is required. Directory and glob expansion skips `.git`, `.hg`, `.svn`, `node_modules`, virtual environments, caches, and `dist`/`build` folders, follows no symbolic links, and is resolved once before the command runs. Expansion that matches nothing, or more than 2,000 files, is an error rather than a partial receipt.
+
+```sh
+# One folder and one pattern instead of dozens of --watch flags
+patchproof run --repo . --watch-dir tests --watch-glob 'src/**/*.py' --out receipt.json -- python -B -m pytest -q
+```
 
 The recorder hashes watched files before and after execution. Standard output and error remain in your terminal; the receipt does not capture them. It stores command arguments, outcome, start time, duration, and hashes. Keep credentials out of arguments.
 
@@ -84,4 +93,4 @@ python scripts/build.py
 
 The demo creates a unique folder under `outputs/`. The server exposes this source folder only on loopback; visit <http://127.0.0.1:8790/site/> and stop the server with Ctrl+C. The viewer compares files and never executes test commands. If folder selection or browser hashing is unavailable, use `receipt.py status` instead.
 
-The build validates plugin metadata and writes `outputs/PatchProof-v0.1.0.zip`. It replaces that generated archive on later builds, but never edits your receipts. Private development logs, generated outputs, caches, and internal publishing notes are excluded.
+The build validates plugin metadata and writes `outputs/PatchProof-v0.2.0.zip`. It replaces that generated archive on later builds, but never edits your receipts. Private development logs, generated outputs, caches, and internal publishing notes are excluded.
