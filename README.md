@@ -105,9 +105,28 @@ AI review and fixes use **your Codex model, tools, permissions, and usage allowa
     command: pytest -q
 ```
 
-The step fails when the receipt no longer describes the code, and uploads the receipt as an artifact either way. A README badge generated from the same receipt can never read *up to date* while the files have moved:
+The step fails when the receipt no longer describes the code, and uploads the receipt as an artifact either way.
+
+### A badge that cannot lie
+
+```yaml
+- uses: Parthiv-kota/patchproof/badge@v0.2.0
+  with:
+    command: pytest -q
+```
+
+It runs the check, renders a badge from the receipt, and commits it to a `patchproof-badges` branch. Then in your README:
+
+```markdown
+![checks](https://raw.githubusercontent.com/OWNER/REPO/patchproof-badges/badge.svg)
+```
+
+The badge reads **up to date** only while the watched files still match the run. Edit the code without re-running and it flips to **out of date** on the next workflow run — or immediately, if you run `pp badge` locally. It is a picture of a receipt, not a decoration.
+
+Locally:
 
 ```sh
+pp verify -- pytest -q
 pp badge --receipt patchproof-receipt.json --out pp.svg
 ```
 

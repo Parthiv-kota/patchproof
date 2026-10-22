@@ -64,6 +64,20 @@ patchproof badge --receipt patchproof-receipt.json --out pp.svg
 
 Writes a self-contained SVG reading `up to date`, `out of date`, `failing` or `unknown`. A stale receipt can never produce a passing badge. The exit code follows the receipt's state.
 
+### Publish it from CI
+
+```yaml
+- uses: Parthiv-kota/patchproof/badge@v0.2.0
+  with:
+    command: pytest -q          # required
+    branch: patchproof-badges   # where the SVG is committed
+    path: badge.svg             # file name inside that branch
+    label: check                # left-hand text
+    watch-dir: src,tests        # optional; defaults to the usual trees
+```
+
+The action runs the check, renders the badge, and commits it to the badge branch only when the SVG changed. It also writes `state` and `badge-url` as outputs and renders the badge into the job summary. The receipt is uploaded as an artifact whether the check passed or failed, so a failing run produces a **failing** badge rather than leaving the last green one in place.
+
 ## Record a command
 
 ```sh

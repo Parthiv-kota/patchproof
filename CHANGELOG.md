@@ -4,6 +4,8 @@
 
 ### Added
 
+- `badge/action.yml` — a composite action that runs a check, renders the badge and commits it to a badge branch, with `state` and `badge-url` outputs. A failing check publishes a failing badge instead of leaving the last green one.
+- A self-badge workflow: this repository now publishes its own live badge from its own test suite.
 - `pp agents` — writes the verification instruction into the rule file each coding host reads: Claude Code (`CLAUDE.md`), Codex (`AGENTS.md`), Cursor (`.cursor/rules/*.mdc`), Windsurf, Cline, Roo Code, Aider (`CONVENTIONS.md`), Gemini CLI and GitHub Copilot. Existing files are appended to, never replaced; `pp agents detect` and `pp agents list` show what a repository already uses.
 - `pp verify` — one command, no flags: watches source and test trees plus dependency manifests, runs the command, prints one plain sentence, writes a receipt. Exit 1 the moment the result is stale.
 - `pp audit` — re-checks every receipt in a repository and exits nonzero if any is out of date. The line that belongs in CI.

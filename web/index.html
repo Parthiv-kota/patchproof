@@ -180,21 +180,25 @@ python scripts/demo.py
       <div class="section-head">
         <div class="eyebrow">Put it where people look</div>
         <h2>A badge that cannot lie about it.</h2>
-        <p>Most badges are decorative. This one is generated from a receipt: it reads <strong>up to date</strong> only while the watched files still match the run, and flips to <strong>out of date</strong> the moment they move.</p>
+        <p>Most badges are decoration. This one is a picture of a receipt: it reads <strong>up to date</strong> only while the watched files still match the run, and flips to <strong>out of date</strong> when they move. A failing check publishes a failing badge rather than leaving the last green one in place.</p>
       </div>
       <div class="grid grid-2">
         <div class="card">
-          <h3>In CI</h3>
-          <pre><code>- uses: Parthiv-kota/patchproof@v0.2.0
+          <h3>Two lines in CI</h3>
+          <pre><code>- uses: Parthiv-kota/patchproof/badge@v0.2.0
   with:
     command: pytest -q</code></pre>
-          <p>The step fails the build when the receipt no longer describes the code, and uploads the receipt as an artifact either way.</p>
+          <p>Runs the check, renders the badge, commits it to a <code>patchproof-badges</code> branch — and only when it changed.</p>
         </div>
         <div class="card">
-          <h3>In the README</h3>
-          <pre><code>pp badge --receipt patchproof-receipt.json --out pp.svg</code></pre>
-          <p>A stale receipt can never render a passing badge. If you cannot show it green, it is not green.</p>
+          <h3>One line in the README</h3>
+          <pre><code>![checks](https://raw.githubusercontent.com/
+  OWNER/REPO/patchproof-badges/badge.svg)</code></pre>
+          <p>The job also exposes <code>state</code> and <code>badge-url</code> outputs, so you never assemble a URL by hand.</p>
         </div>
+      </div>
+      <div class="note-band">
+        <p><strong>It fails the build, too.</strong> The <code>verify</code> action is the gate; the <code>badge</code> action is the evidence. Use both, or use the badge one alone and let a red badge do the arguing.</p>
       </div>
     </div>
   </section>

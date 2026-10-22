@@ -208,28 +208,47 @@ BADGE_COLORS = {"up_to_date": "#17634e", "failing": "#b45309",
 
 
 def badge_svg(state, label="check"):
-    """A small, self-contained SVG badge. `state` is a resolve_state() value."""
+    """A self-contained SVG badge. `state` is a resolve_state() value.
+
+    Character widths are measured, not guessed, so the two halves never overlap
+    and the label is never clipped.
+    """
     if state == "current_passed":
-        text, word = label, "up to date"
+        word = "up to date"
     elif state in {"current_failed", "current_error", "current_timed_out"}:
-        text, word = label, "failing"
+        word = "failing"
     elif state in {"changed_since_check", "changed_during_check"}:
-        text, word = label, "out of date"
+        word = "out of date"
     else:
-        text, word = label, "unknown"
-    color = BADGE_COLORS.get(word.replace(" ", "_"), BADGE_COLORS["unknown"])
-    width = 8 * len(text) + 20, 8 * len(word) + 20
-    total = width[0] + width[1]
-    return ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"20\" role=\"img\" "
-            "aria-label=\"{}: {}\">"
-            "<title>{}: {}</title>"
-            "<rect width=\"{}\" height=\"20\" rx=\"3\" fill=\"#152b35\"/>"
-            "<rect x=\"{}\" width=\"{}\" height=\"20\" rx=\"3\" fill=\"{}\"/>"
-            "<g fill=\"#ffffff\" font-family=\"Verdana,DejaVu Sans,sans-serif\" font-size=\"11\">"
-            "<text x=\"10\" y=\"14\">{}</text>"
-            "<text x=\"{}\" y=\"14\">{}</text></g></svg>").format(
-        total, label, word, label, word, total, width[0], width[1], color,
-        html.escape(text, quote=True), width[0] + 10, html.escape(word, quote=True))
+        word = "unknown"
+    colour = BADGE_COLORS[word.replace(" ", "_")]
+
+    def text_width(value):
+        # Verdana at 11px: digits and capitals are widest, so budget per glyph.
+        return sum(8.2 if ch.isupper() or ch.isdigit() else 7.0 for ch in value)
+
+    left = int(round(text_width(label))) + 14
+    right = int(round(text_width(word))) + 14
+    total = left + right
+    label_x = left / 2
+    word_x = left + right / 2
+    return ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{total}\" height=\"20\" "
+            "role=\"img\" aria-label=\"{label}: {word}\">"
+            "<title>{label}: {word}</title>"
+            "<linearGradient id=\"s\" x2=\"0\" y2=\"100%\">"
+            "<stop offset=\"0\" stop-color=\"#bbb\" stop-opacity=\".1\"/>"
+            "<stop offset=\"1\" stop-opacity=\".1\"/></linearGradient>"
+            "<clipPath id=\"r\"><rect width=\"{total}\" height=\"20\" rx=\"3\" fill=\"#fff\"/></clipPath>"
+            "<g clip-path=\"url(#r)\">"
+            "<rect width=\"{left}\" height=\"20\" fill=\"#152b35\"/>"
+            "<rect x=\"{left}\" width=\"{right}\" height=\"20\" fill=\"{colour}\"/>"
+            "<rect width=\"{total}\" height=\"20\" fill=\"url(#s)\"/></g>"
+            "<g fill=\"#fff\" text-anchor=\"middle\" "
+            "font-family=\"Verdana,DejaVu Sans,Geneva,sans-serif\" font-size=\"11\">"
+            "<text x=\"{label_x:.1f}\" y=\"14\" fill-opacity=\".85\">{label}</text>"
+            "<text x=\"{word_x:.1f}\" y=\"14\">{word}</text></g></svg>").format(
+        total=total, label=html.escape(label, quote=True), word=html.escape(word, quote=True),
+        left=left, right=right, colour=colour, label_x=label_x, word_x=word_x)
 
 
 def summarise(result, receipt):

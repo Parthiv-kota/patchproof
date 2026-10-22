@@ -1,0 +1,122 @@
+name: PatchProof badge
+description: Publish a live "up to date / out of date" badge for a repository, generated from a real check.
+
+branding:
+  icon: activity
+  color: green
+
+inputs:
+  command:
+    description: Command to run, e.g. "pytest -q" or "npm test".
+    required: true
+  branch:
+    description: Branch that holds the published badge. Keep it out of your default branch.
+    required: false
+    default: patchproof-badges
+  path:
+    description: File name for the badge inside the badge branch.
+    required: false
+    default: badge.svg
+  label:
+    description: Left-hand text on the badge.
+    required: false
+    default: check
+  watch-dir:
+    description: Comma-separated folders to watch. Defaults to source and test trees.
+    required: false
+    default: ""
+  python:
+    description: Python executable to use.
+    required: false
+    default: python
+
+outputs:
+  state:
+    description: The receipt state, e.g. current_passed or changed_since_check.
+    value: ${{ steps.badge.outputs.state }}
+  badge-url:
+    description: Raw URL of the published badge, usable directly in a README.
+    value: ${{ steps.badge.outputs.badge_url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install patchproof
+      shell: bash
+      env:
+        PP_SOURCE: ${{ github.action_repository || 'Parthiv-kota/patchproof' }}
+        PP_REF: ${{ github.action_ref || 'main' }}
+      run: ${{ inputs.python }} -m pip install --quiet --disable-pip-version-check "patchproof @ git+https://github.com/${PP_SOURCE}@${PP_REF}"
+
+    - name: Record the check and render the badge
+      id: badge
+      shell: bash
+      env:
+        PP_COMMAND: ${{ inputs.command }}
+        PP_WATCH: ${{ inputs.watch-dir }}
+        PP_LABEL: ${{ inputs.label }}
+        PP_PATH: ${{ inputs.path }}
+        PP_BRANCH: ${{ inputs.branch }}
+        PP_REPO: ${{ github.repository }}
+      run: |
+        set +e
+        dir_args=""
+        if [ -n "$PP_WATCH" ]; then
+          IFS=',' read -r w1 w2 w3 w4 w5 <<< "$PP_WATCH"
+          for dir in $w1 $w2 $w3 $w4 $w5; do dir_args="$dir_args --watch-dir $dir"; done
+        fi
+        rm -f patchproof-receipt.json badge.svg
+        # The receipt is written even when the command fails, so the badge reports
+        # a failing run instead of keeping the last green one.
+        ${{ inputs.python }} -m patchproof.cli verify --quiet \
+          --out patchproof-receipt.json $dir_args -- $PP_COMMAND
+        check_exit=$?
+        if [ -f patchproof-receipt.json ]; then
+          ${{ inputs.python }} -m patchproof.cli badge \
+            --receipt patchproof-receipt.json --out badge.svg --label "$PP_LABEL" > /dev/null 2>&1
+        fi
+        if [ ! -s badge.svg ]; then
+          ${{ inputs.python }} -c "import sys; sys.path.insert(0, 'scripts'); import receipt; open('badge.svg','w',encoding='utf-8').write(receipt.badge_svg('snapshot_unavailable', '$PP_LABEL'))"
+        fi
+        state="$(${{ inputs.python }} -m patchproof.cli audit --json 2>/dev/null | ${{ inputs.python }} -c "import json,sys; d=json.load(sys.stdin); print(d['receipts'][0]['state'] if d['receipts'] else 'unknown')" 2>/dev/null || echo unknown)"
+        echo "state=$state" >> "$GITHUB_OUTPUT"
+        echo "badge_url=https://raw.githubusercontent.com/${PP_REPO}/${PP_BRANCH}/${PP_PATH}" >> "$GITHUB_OUTPUT"
+        {
+          echo "### PatchProof: $state"
+          echo ""
+          echo "![patchproof]($PP_BRANCH/$PP_PATH)"
+        } >> "$GITHUB_STEP_SUMMARY"
+        exit $check_exit
+
+    - name: Publish the badge
+      if: always()
+      shell: bash
+      env:
+        PP_BRANCH: ${{ inputs.branch }}
+        PP_PATH: ${{ inputs.path }}
+        PP_REPO: ${{ github.repository }}
+        PP_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        [ -s badge.svg ] || { echo "No badge to publish."; exit 0; }
+        work="$(mktemp -d)"
+        remote="https://x-access-token:${PP_TOKEN}@github.com/${PP_REPO}.git"
+        if git ls-remote --exit-code --heads "$remote" "$PP_BRANCH" > /dev/null 2>&1; then
+          git clone --quiet --depth 1 --branch "$PP_BRANCH" "$remote" "$work"
+        else
+          git init --quiet "$work"
+          git -C "$work" checkout --quiet -b "$PP_BRANCH"
+        fi
+        mkdir -p "$(dirname "$work/$PP_PATH")"
+        cp badge.svg "$work/$PP_PATH"
+        cd "$work"
+        git config user.name "patchproof[bot]"
+        git config user.email "patchproof@users.noreply.github.com"
+        git add -- "$PP_PATH"
+        if git diff --cached --quiet; then
+          echo "Badge unchanged."
+        else
+          git commit --quiet -m "patchproof: update $PP_PATH"
+          git push --quiet origin "HEAD:$PP_BRANCH"
+          echo "Published $PP_PATH to $PP_BRANCH."
+        fi
