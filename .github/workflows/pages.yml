@@ -36,6 +36,7 @@ jobs:
               # referenced by relative paths are copied alongside it.
               (out / file.name).write_text(text, encoding="utf-8")
           shutil.copy(src / "style.css", out / "style.css")
+          shutil.copy(src / "og.png", out / "og.png")
           (out / "assets").mkdir(exist_ok=True)
           (out / "assets" / "icon.svg").write_bytes(Path("assets/icon.svg").read_bytes())
           (out / ".nojekyll").write_text("", encoding="utf-8")

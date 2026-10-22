@@ -9,6 +9,9 @@ Static pages for PatchProof. No build step, no framework, no external requests.
 | `install.html` | Install from source, record a first check, optional global commands and Codex plugin, uninstall. |
 | `limits.html` | Every known limitation, plus what has actually been tested. |
 | `style.css` | The whole stylesheet. |
+| `og.png` | 1200×630 social preview, referenced by every page's `og:image`. |
+
+The social preview is a real render of the overview page, not a mock-up. To refresh it after a layout change, screenshot the top 1200×630 of `index.html` at that viewport size and replace the file. Keep it above 20 KB — the checks fail on a missing or placeholder image.
 
 ## Preview locally
 

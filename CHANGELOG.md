@@ -8,6 +8,7 @@
 - Corrected the CI action versions, widened the Python matrix to 3.11–3.14, and made the demo step assert that all three report states were generated.
 - Added Dependabot configuration for actions and packaging metadata.
 - Added a GitHub Pages workflow that publishes the website and re-checks links and policy before deploying.
+- Added a rendered 1200×630 social preview with `og:image` and Twitter card metadata on every page; the checks fail if it is missing.
 - Documentation: expanded the documentation index and refreshed version references.
 
 ## 0.1.0 — initial preview

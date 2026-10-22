@@ -63,7 +63,11 @@ jobs:
               assert "script-src 'none'" in text, f'{page}: unexpectedly allows scripts'
               assert not re.search(r'<script|cdn\.|google-analytics|<img[^>]+https?://', text), f'{page}: external or scripted content'
           assert not problems, problems
-          print(f'{len(pages)} website pages checked')
+          og = root / 'og.png'
+          assert og.is_file() and og.stat().st_size > 20000, 'social preview image missing'
+          for page in pages:
+              assert 'og:image' in page.read_text(encoding='utf-8'), f'{page}: no og:image'
+          print(f'{len(pages)} website pages checked, social preview present')
           PY
 
       - name: Validate source package
